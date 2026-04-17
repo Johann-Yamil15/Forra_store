@@ -2,14 +2,34 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:forra_store/data/models/cart_item.dart';
+import 'package:forra_store/data/models/cliente.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class CartProvider extends ChangeNotifier {
   static const _storageKey = 'cart_items_v1';
 
   final List<CartItem> _items = [];
+  Cliente? _selectedCliente;
 
   List<CartItem> get items => List.unmodifiable(_items);
+  Cliente? get selectedCliente => _selectedCliente;
+
+  final List<Cliente> mockClientes = [
+    Cliente(
+      id: 1,
+      nombre: "Juan (Maíz Especial)",
+      descuentos: {
+        1: {"Bulto": 200.0},
+      },
+    ),
+    Cliente(
+      id: 2,
+      nombre: "Pedro (Alimento Especial)",
+      descuentos: {
+        7: {"Kg": 40.0},
+      },
+    ),
+  ];
 
   CartProvider() {
     // carga inicial (no await en constructor; inicia en background)
@@ -83,10 +103,34 @@ class CartProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  double get total => _items.fold(
-    0.0,
-    (sum, item) => sum + item.precioUnitario * item.cantidad,
-  );
+  void selectCliente(Cliente? cliente) {
+    _selectedCliente = cliente;
+    notifyListeners();
+  }
+
+  double getItemPrice(CartItem item) {
+    if (_selectedCliente != null) {
+      final productDiscounts = _selectedCliente!.descuentos[item.idProducto];
+      if (productDiscounts != null && productDiscounts.containsKey(item.unidad)) {
+        return productDiscounts[item.unidad]!;
+      }
+    }
+    return item.precioUnitario;
+  }
+
+  double get totalOriginal => _items.fold(
+        0.0,
+        (sum, item) => sum + item.precioUnitario * item.cantidad,
+      );
+
+  double get totalFinal => _items.fold(
+        0.0,
+        (sum, item) => sum + getItemPrice(item) * item.cantidad,
+      );
+
+  double get totalDescuento => totalOriginal - totalFinal;
+
+  double get total => totalFinal;
 
   int get totalItems => _items.fold(0, (s, i) => s + i.cantidad);
 

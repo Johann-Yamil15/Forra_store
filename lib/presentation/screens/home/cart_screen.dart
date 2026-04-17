@@ -5,6 +5,7 @@ import 'package:forra_store/presentation/providers/cart_provider.dart';
 import 'package:forra_store/core/theme/neumorphic_colors.dart';
 import 'package:forra_store/core/utils/neumorphic_style.dart';
 import 'package:forra_store/data/models/cart_item.dart';
+import 'package:forra_store/data/models/cliente.dart';
 
 class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
@@ -19,11 +20,12 @@ class CartScreen extends StatelessWidget {
       backgroundColor: colors.background,
       body: Column(
         children: [
+          _buildCustomerSelector(context, cartProvider, colors),
           Expanded(
             child: cartProvider.items.isEmpty
                 ? _buildEmptyCart(colors)
                 : ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 100),
+                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 100),
                     itemCount: cartProvider.items.length,
                     itemBuilder: (context, index) {
                       final item = cartProvider.items[index];
@@ -82,19 +84,65 @@ class CartScreen extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Subtotal Original (si hay descuento)
+            if (cartProvider.totalDescuento > 0)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Subtotal',
+                      style: TextStyle(color: colors.text.withOpacity(0.6)),
+                    ),
+                    Text(
+                      '\$${cartProvider.totalOriginal.toStringAsFixed(2)}',
+                      style: TextStyle(
+                        color: colors.text.withOpacity(0.6),
+                        decoration: TextDecoration.lineThrough,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            // Descuento
+            if (cartProvider.totalDescuento > 0)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Descuento Cliente Especial',
+                      style: TextStyle(
+                        color: colors.secondary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Text(
+                      '-\$${cartProvider.totalDescuento.toStringAsFixed(2)}',
+                      style: TextStyle(
+                        color: colors.secondary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Total',
+                  'Total a Pagar',
                   style: TextStyle(
                     fontSize: 18,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.bold,
                     color: colors.text,
                   ),
                 ),
                 Text(
-                  '\$${cartProvider.total.toStringAsFixed(2)}',
+                  '\$${cartProvider.totalFinal.toStringAsFixed(2)}',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -130,6 +178,144 @@ class CartScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildCustomerSelector(
+    BuildContext context,
+    CartProvider cartProvider,
+    NeumorphicColors colors,
+  ) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 20, 16, 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      decoration: NeumorphicStyle.elevated(colors, radius: 12),
+      child: ListTile(
+        contentPadding: EdgeInsets.zero,
+        leading: Icon(
+          Icons.person_search_outlined,
+          color: colors.primary,
+        ),
+        title: Text(
+          cartProvider.selectedCliente?.nombre ?? 'Seleccionar Cliente',
+          style: TextStyle(
+            color: cartProvider.selectedCliente != null
+                ? colors.text
+                : colors.text.withOpacity(0.5),
+            fontWeight: cartProvider.selectedCliente != null
+                ? FontWeight.bold
+                : FontWeight.normal,
+          ),
+        ),
+        trailing: Icon(Icons.keyboard_arrow_down, color: colors.text.withOpacity(0.5)),
+        onTap: () => _showCustomerPicker(context, cartProvider, colors),
+      ),
+    );
+  }
+
+  void _showCustomerPicker(
+    BuildContext context,
+    CartProvider cartProvider,
+    NeumorphicColors colors,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) {
+        String searchQuery = '';
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final filteredClientes = cartProvider.mockClientes
+                .where((c) => c.nombre.toLowerCase().contains(searchQuery.toLowerCase()))
+                .toList();
+
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.7,
+              decoration: BoxDecoration(
+                color: colors.background,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+              child: Column(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: colors.text.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'Buscar Cliente',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: colors.text,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    decoration: InputDecoration(
+                      hintText: 'Nombre del cliente...',
+                      prefixIcon: const Icon(Icons.search),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: colors.darkShadow.withOpacity(0.2)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: colors.darkShadow.withOpacity(0.1)),
+                      ),
+                    ),
+                    onChanged: (val) {
+                      setModalState(() => searchQuery = val);
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: filteredClientes.length + 1,
+                      itemBuilder: (context, index) {
+                        if (index == 0) {
+                          return ListTile(
+                            leading: const CircleAvatar(child: Icon(Icons.person_off_outlined)),
+                            title: const Text('Sin Cliente (Precio Público)'),
+                            selected: cartProvider.selectedCliente == null,
+                            onTap: () {
+                              cartProvider.selectCliente(null);
+                              Navigator.pop(context);
+                            },
+                          );
+                        }
+                        final cliente = filteredClientes[index - 1];
+                        return ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: colors.primary.withOpacity(0.1),
+                            child: Text(
+                              cliente.nombre[0],
+                              style: TextStyle(color: colors.primary),
+                            ),
+                          ),
+                          title: Text(cliente.nombre),
+                          subtitle: const Text('Comprador Concurrente'),
+                          selected: cartProvider.selectedCliente?.id == cliente.id,
+                          onTap: () {
+                            cartProvider.selectCliente(cliente);
+                            Navigator.pop(context);
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }
@@ -172,12 +358,44 @@ class _CartItemTile extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  '${item.tamano} ${item.unidad} • \$${item.precioUnitario.toStringAsFixed(2)}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: colors.text.withOpacity(0.6),
-                  ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      '${item.tamano} ${item.unidad} • ',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: colors.text.withOpacity(0.6),
+                      ),
+                    ),
+                    if (context.read<CartProvider>().getItemPrice(item) <
+                        item.precioUnitario) ...[
+                      Text(
+                        '\$${item.precioUnitario.toStringAsFixed(2)}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: colors.text.withOpacity(0.4),
+                          decoration: TextDecoration.lineThrough,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '\$${context.read<CartProvider>().getItemPrice(item).toStringAsFixed(2)}',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: colors.secondary,
+                        ),
+                      ),
+                    ] else
+                      Text(
+                        '\$${item.precioUnitario.toStringAsFixed(2)}',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: colors.text,
+                        ),
+                      ),
+                  ],
                 ),
                 const SizedBox(height: 8),
                 Row(
