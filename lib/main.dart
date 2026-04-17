@@ -9,6 +9,7 @@ import 'core/theme/dark_theme.dart';
 import 'core/utils/AuthProvider.dart';
 import 'presentation/screens/splash_screen.dart';
 import 'presentation/screens/login_screen.dart';
+import 'presentation/providers/cart_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,6 +22,9 @@ void main() async {
 
         // 🔐 Auth
         ChangeNotifierProvider(create: (_) => AuthProvider()),
+
+        // 🛒 Cart
+        ChangeNotifierProvider(create: (_) => CartProvider()),
       ],
       child: const ForraStoreApp(),
     ),

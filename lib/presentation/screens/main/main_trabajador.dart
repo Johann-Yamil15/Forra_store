@@ -3,12 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:forra_store/core/theme/neumorphic_colors.dart';
 import 'package:forra_store/core/utils/neumorphic_style.dart';
 import 'package:forra_store/presentation/screens/home/productos_screen.dart';
+import 'package:forra_store/presentation/screens/home/cart_screen.dart';
 import 'package:forra_store/presentation/screens/profile/profile_screen.dart';
 
-/// ─────────────────────────────────────────────────────────────
-/// MAIN SCREEN TRABAJADOR
-/// Contenedor principal con navegación neumórfica
-/// ─────────────────────────────────────────────────────────────
 class MainScreenTrabajador extends StatefulWidget {
   const MainScreenTrabajador({super.key});
 
@@ -16,17 +13,14 @@ class MainScreenTrabajador extends StatefulWidget {
   State<MainScreenTrabajador> createState() => _MainScreenTrabajadorState();
 }
 
-class _MainScreenTrabajadorState extends State<MainScreenTrabajador>
-    with TickerProviderStateMixin {
+class _MainScreenTrabajadorState extends State<MainScreenTrabajador> {
   int _selectedIndex = 0;
-
-  late final AnimationController _tabController;
-  late final Animation<double> _scaleAnimation;
+  late final PageController _pageController;
 
   final List<Widget> _screens = const [
     ProductosScreen(),
-    Placeholder(),
-    Placeholder(),
+    CartScreen(),
+    Placeholder(child: Center(child: Text('Historial (Próximamente)', style: TextStyle(color: Colors.grey)))),
     ProfileScreen(),
   ];
 
@@ -34,7 +28,7 @@ class _MainScreenTrabajadorState extends State<MainScreenTrabajador>
     _NavItem(
       icon: Icons.storefront_outlined,
       activeIcon: Icons.storefront,
-      label: 'Productos',
+      label: 'Tienda',
     ),
     _NavItem(
       icon: Icons.shopping_cart_outlined,
@@ -44,7 +38,7 @@ class _MainScreenTrabajadorState extends State<MainScreenTrabajador>
     _NavItem(
       icon: Icons.receipt_long_outlined,
       activeIcon: Icons.receipt_long,
-      label: 'Historial',
+      label: 'Pedidos',
     ),
     _NavItem(
       icon: Icons.person_outline,
@@ -56,31 +50,27 @@ class _MainScreenTrabajadorState extends State<MainScreenTrabajador>
   @override
   void initState() {
     super.initState();
-
-    _tabController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 250),
-    );
-
-    _scaleAnimation = Tween<double>(begin: 0.92, end: 1.0).animate(
-      CurvedAnimation(parent: _tabController, curve: Curves.easeOutCubic),
-    );
-
-    _tabController.forward();
+    _pageController = PageController(initialPage: _selectedIndex);
   }
 
   @override
   void dispose() {
-    _tabController.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 
-  void _onTap(int index) {
+  void _onBarTap(int index) {
     if (_selectedIndex == index) return;
-    setState(() => _selectedIndex = index);
-    _tabController.forward(from: 0);
+    _pageController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeInOutQuint,
+    );
+    HapticFeedback.selectionClick();
+  }
 
-    HapticFeedback.lightImpact();
+  void _onPageChanged(int index) {
+    setState(() => _selectedIndex = index);
   }
 
   @override
@@ -92,66 +82,70 @@ class _MainScreenTrabajadorState extends State<MainScreenTrabajador>
       backgroundColor: colors.background,
       body: Column(
         children: [
-          /// ───────── APP BAR + MENÚ UNIFICADOS ─────────
-          Container(
-            decoration: NeumorphicStyle.elevated(colors),
-            child: Column(
-              children: [
-                _NeumorphicAppBar(colors: colors),
-                _NeumorphicTopMenu(
-                  colors: colors,
-                  items: _navItems,
-                  selectedIndex: _selectedIndex,
-                  scaleAnimation: _scaleAnimation,
-                  onTap: _onTap,
-                ),
-              ],
-            ),
-          ),
+          /// ───────── APP BAR ─────────
+          _InternalAppBar(colors: colors),
 
-          /// ───────── CONTENIDO ─────────
+          /// ───────── CONTENIDO SWIPEABLE ─────────
           Expanded(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 250),
-              child: IndexedStack(
-                key: ValueKey(_selectedIndex),
-                index: _selectedIndex,
-                children: _screens,
-              ),
+            child: PageView(
+              controller: _pageController,
+              onPageChanged: _onPageChanged,
+              children: _screens,
             ),
           ),
         ],
+      ),
+      bottomNavigationBar: _InstagramStyleNavBar(
+        colors: colors,
+        items: _navItems,
+        selectedIndex: _selectedIndex,
+        onTap: _onBarTap,
       ),
     );
   }
 }
 
-/// ─────────────────────────────────────────────────────────────
-/// APP BAR NEUMÓRFICO
-/// ─────────────────────────────────────────────────────────────
-class _NeumorphicAppBar extends StatelessWidget {
+class _InternalAppBar extends StatelessWidget {
   final NeumorphicColors colors;
-  const _NeumorphicAppBar({required this.colors});
+  const _InternalAppBar({required this.colors});
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       bottom: false,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        decoration: BoxDecoration(
+          color: colors.background,
+          border: Border(
+            bottom: BorderSide(
+              color: colors.darkShadow.withOpacity(0.3),
+              width: 1,
+            ),
+          ),
+        ),
         child: Row(
           children: [
-            Icon(Icons.agriculture, color: colors.primary, size: 26),
-            const SizedBox(width: 12),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: NeumorphicStyle.elevated(colors, radius: 10, depth: 3),
+              child: Icon(Icons.agriculture, color: colors.primary, size: 22),
+            ),
+            const SizedBox(width: 16),
             Expanded(
               child: Text(
                 'Forra Store',
                 style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.5,
                   color: colors.text,
                 ),
               ),
+            ),
+            IconButton(
+              onPressed: () {},
+              icon: Icon(Icons.notifications_none, color: colors.text),
             ),
           ],
         ),
@@ -160,109 +154,83 @@ class _NeumorphicAppBar extends StatelessWidget {
   }
 }
 
-/// ─────────────────────────────────────────────────────────────
-/// MENÚ SUPERIOR NEUMÓRFICO CON LÍNEA INFERIOR
-/// ─────────────────────────────────────────────────────────────
-class _NeumorphicTopMenu extends StatelessWidget {
+class _InstagramStyleNavBar extends StatelessWidget {
   final NeumorphicColors colors;
   final List<_NavItem> items;
   final int selectedIndex;
-  final Animation<double> scaleAnimation;
   final ValueChanged<int> onTap;
 
-  const _NeumorphicTopMenu({
+  const _InstagramStyleNavBar({
     required this.colors,
     required this.items,
     required this.selectedIndex,
-    required this.scaleAnimation,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-      decoration: NeumorphicStyle.elevated(colors),
-      child: Row(
-        children: List.generate(items.length, (i) {
-          final selected = i == selectedIndex;
-          final item = items[i];
+      decoration: BoxDecoration(
+        color: colors.background,
+        border: Border(
+          top: BorderSide(
+            color: colors.darkShadow.withOpacity(0.3),
+            width: 1,
+          ),
+        ),
+      ),
+      child: SafeArea(
+        child: Container(
+          height: 65,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: List.generate(items.length, (index) {
+              final isSelected = selectedIndex == index;
+              final item = items[index];
 
-          return Expanded(
-            child: GestureDetector(
-              onTap: () => onTap(i),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                decoration:
-                    selected
-                        ? NeumorphicStyle.inset(colors)
-                        : NeumorphicStyle.elevated(colors),
-                child: ScaleTransition(
-                  scale:
-                      selected
-                          ? scaleAnimation
-                          : const AlwaysStoppedAnimation(1),
+              return Expanded(
+                child: InkWell(
+                  onTap: () => onTap(index),
+                  highlightColor: Colors.transparent,
+                  splashColor: Colors.transparent,
                   child: Column(
-                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        selected ? item.activeIcon : item.icon,
-                        size: 22,
-                        color:
-                            selected
-                                ? colors.primary
-                                : colors.text.withOpacity(0.7),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        item.label,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight:
-                              selected ? FontWeight.bold : FontWeight.w500,
-                          color:
-                              selected
-                                  ? colors.primary
-                                  : colors.text.withOpacity(0.7),
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        padding: const EdgeInsets.all(8),
+                        decoration: isSelected 
+                            ? NeumorphicStyle.inset(colors, radius: 12, depth: 2)
+                            : const BoxDecoration(),
+                        child: Icon(
+                          isSelected ? item.activeIcon : item.icon,
+                          color: isSelected ? colors.primary : colors.text.withOpacity(0.5),
+                          size: 26,
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      // LÍNEA INFERIOR NEÓN
-                      Container(
-                        height: 3,
-                        width: 28,
-                        decoration: BoxDecoration(
-                          color: selected ? colors.primary : Colors.transparent,
-                          borderRadius: BorderRadius.circular(2),
-                          boxShadow:
-                              selected
-                                  ? [
-                                    BoxShadow(
-                                      color: colors.primary.withOpacity(0.5),
-                                      blurRadius: 6,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ]
-                                  : [],
+                      const SizedBox(height: 2),
+                      if (isSelected)
+                        Container(
+                          width: 4,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: colors.primary,
+                            shape: BoxShape.circle,
+                          ),
                         ),
-                      ),
                     ],
                   ),
                 ),
-              ),
-            ),
-          );
-        }),
+              );
+            }),
+          ),
+        ),
       ),
     );
   }
 }
 
-/// ─────────────────────────────────────────────────────────────
-/// MODELO DE ITEM DE NAVEGACIÓN
-/// ─────────────────────────────────────────────────────────────
 class _NavItem {
   final IconData icon;
   final IconData activeIcon;
