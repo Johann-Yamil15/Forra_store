@@ -111,6 +111,7 @@ class _InternalAppBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return SafeArea(
       bottom: false,
       child: Container(
@@ -119,8 +120,8 @@ class _InternalAppBar extends StatelessWidget {
           color: colors.background,
           border: Border(
             bottom: BorderSide(
-              color: colors.darkShadow.withOpacity(0.3),
-              width: 1,
+              color: colors.darkShadow.withOpacity(isDark ? 0.2 : 0.4),
+              width: 1.2,
             ),
           ),
         ),
@@ -128,7 +129,10 @@ class _InternalAppBar extends StatelessWidget {
           children: [
             Container(
               padding: const EdgeInsets.all(8),
-              decoration: NeumorphicStyle.elevated(colors, radius: 10, depth: 3),
+              decoration: BoxDecoration(
+                color: colors.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
               child: Icon(Icons.agriculture, color: colors.primary, size: 22),
             ),
             const SizedBox(width: 16),
@@ -137,8 +141,8 @@ class _InternalAppBar extends StatelessWidget {
                 'Forra Store',
                 style: TextStyle(
                   fontSize: 22,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: -0.5,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.8,
                   color: colors.text,
                 ),
               ),
@@ -169,13 +173,14 @@ class _InstagramStyleNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
         color: colors.background,
         border: Border(
           top: BorderSide(
-            color: colors.darkShadow.withOpacity(0.3),
-            width: 1,
+            color: colors.darkShadow.withOpacity(isDark ? 0.2 : 0.4),
+            width: 1.2,
           ),
         ),
       ),
@@ -199,9 +204,12 @@ class _InstagramStyleNavBar extends StatelessWidget {
                     children: [
                       AnimatedContainer(
                         duration: const Duration(milliseconds: 300),
-                        padding: const EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(10),
                         decoration: isSelected 
-                            ? NeumorphicStyle.inset(colors, radius: 12, depth: 2)
+                            ? BoxDecoration(
+                                color: colors.primary.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(14),
+                              )
                             : const BoxDecoration(),
                         child: Icon(
                           isSelected ? item.activeIcon : item.icon,

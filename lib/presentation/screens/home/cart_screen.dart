@@ -63,8 +63,20 @@ class CartScreen extends StatelessWidget {
 
   Widget _buildCheckoutSection(CartProvider cartProvider, NeumorphicColors colors) {
     return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: NeumorphicStyle.elevated(colors, radius: 30, depth: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      decoration: BoxDecoration(
+        color: colors.background,
+        border: Border(
+          top: BorderSide(color: colors.darkShadow.withOpacity(0.15)),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: colors.darkShadow.withOpacity(0.05),
+            offset: const Offset(0, -4),
+            blurRadius: 10,
+          ),
+        ],
+      ),
       child: SafeArea(
         top: false,
         child: Column(

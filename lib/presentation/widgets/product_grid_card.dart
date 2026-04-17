@@ -84,16 +84,17 @@ class ProductGridCard extends StatelessWidget {
                     const Spacer(),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
+                        horizontal: 10,
+                        vertical: 6,
                       ),
-                      decoration: NeumorphicStyle.inset(colors),
+                      decoration: NeumorphicStyle.inset(colors, radius: 8),
                       child: Text(
-                        producto.categoria,
+                        producto.categoria.toUpperCase(),
                         style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          color: colors.operatorText,
+                          fontSize: 9,
+                          letterSpacing: 0.5,
+                          fontWeight: FontWeight.bold,
+                          color: colors.primary,
                         ),
                       ),
                     ),

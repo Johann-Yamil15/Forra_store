@@ -61,6 +61,17 @@ class _ProductosScreenState extends State<ProductosScreen>
     });
   }
 
+  String _normalize(String input) {
+    return input
+        .toLowerCase()
+        .replaceAll('á', 'a')
+        .replaceAll('é', 'e')
+        .replaceAll('í', 'i')
+        .replaceAll('ó', 'o')
+        .replaceAll('ú', 'u')
+        .replaceAll('ü', 'u');
+  }
+
   void _clearFilters() {
     setState(() {
       _selectedCategoria = null;
@@ -81,15 +92,21 @@ class _ProductosScreenState extends State<ProductosScreen>
   List<String> get _usos => _productos.map((e) => e.uso).toSet().toList();
 
   List<ProductoPreview> get _allMatches {
-    final q = _query.toLowerCase();
+    final q = _normalize(_query);
     return _productos.where((p) {
+      final name = _normalize(p.nombreProducto);
+      final desc = _normalize(p.descripcionProducto);
+      final cat = _normalize(p.categoria);
+      final sub = _normalize(p.subcategoria);
+      final uso = _normalize(p.uso);
+
       final matchQuery =
           _query.isEmpty ||
-          p.nombreProducto.toLowerCase().contains(q) ||
-          p.descripcionProducto.toLowerCase().contains(q) ||
-          p.categoria.toLowerCase().contains(q) ||
-          p.subcategoria.toLowerCase().contains(q) ||
-          p.uso.toLowerCase().contains(q);
+          name.contains(q) ||
+          desc.contains(q) ||
+          cat.contains(q) ||
+          sub.contains(q) ||
+          uso.contains(q);
 
       return matchQuery &&
           (_selectedCategoria == null || p.categoria == _selectedCategoria) &&
@@ -170,7 +187,7 @@ class _ProductosScreenState extends State<ProductosScreen>
 
   Widget _buildSearch(NeumorphicColors colors) {
     return Container(
-      decoration: NeumorphicStyle.inset(colors),
+      decoration: NeumorphicStyle.inset(colors, radius: 12),
       child: TextField(
         onChanged: _onSearchChanged,
         style: TextStyle(color: colors.text),
@@ -200,7 +217,7 @@ class _ProductosScreenState extends State<ProductosScreen>
 
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: NeumorphicStyle.elevated(colors),
+      decoration: NeumorphicStyle.elevated(colors, radius: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
