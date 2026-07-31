@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../core/theme/neumorphic_colors.dart';
 import '../../core/utils/neumorphic_style.dart';
 import '../../data/models/producto_preview.dart';
@@ -106,7 +106,7 @@ class _PresentationTile extends StatelessWidget {
                           vertical: 3,
                         ),
                         decoration: BoxDecoration(
-                          color: colors.primary.withOpacity(0.15),
+                          color: colors.primary.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
@@ -122,7 +122,7 @@ class _PresentationTile extends StatelessWidget {
                       Text(
                         'Stock: ${pres.stock}',
                         style: TextStyle(
-                          color: colors.text.withOpacity(0.7),
+                          color: colors.text.withValues(alpha: 0.7),
                           fontSize: 12,
                         ),
                       ),

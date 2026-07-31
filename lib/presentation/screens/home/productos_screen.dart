@@ -1,5 +1,6 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:forra_store/data/models/producto_preview.dart';
+import 'package:forra_store/data/services/producto_service.dart';
 import 'package:forra_store/presentation/screens/home/product_detail_screen.dart';
 import 'package:forra_store/presentation/widgets/product_grid_card.dart';
 import 'package:forra_store/presentation/widgets/product_pagination.dart';
@@ -17,7 +18,9 @@ class ProductosScreen extends StatefulWidget {
 class _ProductosScreenState extends State<ProductosScreen>
     with TickerProviderStateMixin {
   String _query = '';
-  late List<ProductoPreview> _productos;
+  List<ProductoPreview> _productos = [];
+  bool _isLoading = true;
+  String? _errorMsg;
 
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -43,7 +46,7 @@ class _ProductosScreenState extends State<ProductosScreen>
       curve: Curves.easeInOut,
     );
 
-    _cargarProductosMock();
+    _cargarProductos();
   }
 
   @override
@@ -135,6 +138,36 @@ class _ProductosScreenState extends State<ProductosScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colors = isDark ? NeumorphicColors.dark : NeumorphicColors.light;
 
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: colors.background,
+        body: Center(child: CircularProgressIndicator(color: colors.primary)),
+      );
+    }
+
+    if (_errorMsg != null) {
+      return Scaffold(
+        backgroundColor: colors.background,
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.cloud_off, size: 56, color: colors.text.withValues(alpha: 0.3)),
+              const SizedBox(height: 16),
+              Text(_errorMsg!, textAlign: TextAlign.center, style: TextStyle(color: colors.text.withValues(alpha: 0.6))),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                onPressed: _cargarProductos,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Reintentar'),
+                style: ElevatedButton.styleFrom(backgroundColor: colors.primary, foregroundColor: Colors.white),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: colors.background,
       body: FadeTransition(
@@ -193,7 +226,7 @@ class _ProductosScreenState extends State<ProductosScreen>
         style: TextStyle(color: colors.text),
         decoration: InputDecoration(
           hintText: 'Buscar productos...',
-          hintStyle: TextStyle(color: colors.text.withOpacity(0.5)),
+          hintStyle: TextStyle(color: colors.text.withValues(alpha: 0.5)),
           prefixIcon: Icon(Icons.search, color: colors.primary),
           suffixIcon:
               _query.isNotEmpty
@@ -331,7 +364,7 @@ class _ProductosScreenState extends State<ProductosScreen>
               '${_allMatches.length} resultados • Página $_currentPage de $_totalPages',
               style: TextStyle(
                 fontSize: 12,
-                color: colors.text.withOpacity(0.6),
+                color: colors.text.withValues(alpha: 0.6),
               ),
             ),
           ],
@@ -369,7 +402,7 @@ class _ProductosScreenState extends State<ProductosScreen>
       padding: const EdgeInsets.all(40),
       child: Column(
         children: [
-          Icon(Icons.search_off, size: 72, color: colors.text.withOpacity(0.4)),
+          Icon(Icons.search_off, size: 72, color: colors.text.withValues(alpha: 0.4)),
           const SizedBox(height: 12),
           Text(
             'No se encontraron productos',
@@ -377,7 +410,7 @@ class _ProductosScreenState extends State<ProductosScreen>
           ),
           Text(
             'Intenta cambiar filtros o búsqueda',
-            style: TextStyle(color: colors.text.withOpacity(0.6)),
+            style: TextStyle(color: colors.text.withValues(alpha: 0.6)),
           ),
         ],
       ),
@@ -440,303 +473,18 @@ class _ProductosScreenState extends State<ProductosScreen>
     );
   }
 
-  // ─────────────────── MOCK ───────────────────
+  // ─────────────────── API ───────────────────
 
-  void _cargarProductosMock() {
-    setState(() {
-      _productos = _mockProductos();
-    });
-
-    _animationController.forward();
-  }
-
-  List<ProductoPreview> _mockProductos() {
-    return [
-      ProductoPreview(
-        idProducto: 1,
-        nombreProducto: "Maíz Amarillo",
-        descripcionProducto: "Maíz de alta calidad",
-        categoria: "Granos",
-        subcategoria: "Maíz",
-        uso: "Alimento",
-        imagenUrl:
-            "https://delagarzamateriasprimas.com/wp-content/uploads/2024/07/maiz.jpg",
-        presentaciones: [
-          PresentacionProducto(unidad: "Kg", tamano: 1, precio: 50, stock: 100),
-          PresentacionProducto(
-            unidad: "Bulto",
-            tamano: 20,
-            precio: 250,
-            stock: 100,
-          ),
-          PresentacionProducto(
-            unidad: "Bulto",
-            tamano: 40,
-            precio: 380,
-            stock: 100,
-          ),
-        ],
-      ),
-      // 🔹 el resto EXACTAMENTE como lo tienes
-      ProductoPreview(
-        idProducto: 2,
-        nombreProducto: "Alimento de Puerco 30/70",
-        descripcionProducto:
-            "Alimento balanceado para cerdos con 30% proteína y 70% carbohidratos.",
-        categoria: "Alimentos",
-        subcategoria: "Puerco",
-        uso: "Nutrición animal",
-        imagenUrl:
-            "https://delagarzamateriasprimas.com/wp-content/uploads/2024/07/alimento_puerco.jpg",
-        presentaciones: [
-          PresentacionProducto(unidad: "Kg", tamano: 1, precio: 45, stock: 200),
-          PresentacionProducto(
-            unidad: "Bulto",
-            tamano: 25,
-            precio: 850,
-            stock: 80,
-          ),
-          PresentacionProducto(
-            unidad: "Bulto",
-            tamano: 40,
-            precio: 1200,
-            stock: 60,
-          ),
-        ],
-      ),
-      ProductoPreview(
-        idProducto: 3,
-        nombreProducto: "Alimento para Perro",
-        descripcionProducto:
-            "Croquetas premium para perros de todas las edades.",
-        categoria: "Alimentos",
-        subcategoria: "Perros",
-        uso: "Mascotas",
-        imagenUrl:
-            "https://delagarzamateriasprimas.com/wp-content/uploads/2024/07/alimento_perro.jpg",
-        presentaciones: [
-          PresentacionProducto(unidad: "Kg", tamano: 1, precio: 70, stock: 150),
-          PresentacionProducto(
-            unidad: "Bulto",
-            tamano: 20,
-            precio: 1200,
-            stock: 100,
-          ),
-          PresentacionProducto(
-            unidad: "Bulto",
-            tamano: 40,
-            precio: 2000,
-            stock: 50,
-          ),
-        ],
-      ),
-      ProductoPreview(
-        idProducto: 4,
-        nombreProducto: "Líquido para Fumigar Folei",
-        descripcionProducto:
-            "Insecticida agrícola para control de plagas en cultivos.",
-        categoria: "Agroquímicos",
-        subcategoria: "Insecticidas",
-        uso: "Fumigación",
-        imagenUrl:
-            "https://delagarzamateriasprimas.com/wp-content/uploads/2024/07/liquido_fumigar.jpg",
-        presentaciones: [
-          PresentacionProducto(
-            unidad: "Litro",
-            tamano: 1,
-            precio: 180,
-            stock: 90,
-          ),
-          PresentacionProducto(
-            unidad: "Galón",
-            tamano: 4,
-            precio: 650,
-            stock: 50,
-          ),
-          PresentacionProducto(
-            unidad: "Bidón",
-            tamano: 20,
-            precio: 2800,
-            stock: 30,
-          ),
-        ],
-      ),
-      ProductoPreview(
-        idProducto: 5,
-        nombreProducto: "Comedero de Pollo",
-        descripcionProducto:
-            "Comedero plástico resistente para pollos en diferentes tamaños.",
-        categoria: "Accesorios",
-        subcategoria: "Aves",
-        uso: "Equipamiento",
-        imagenUrl:
-            "https://delagarzamateriasprimas.com/wp-content/uploads/2024/07/comedero_pollo.jpg",
-        presentaciones: [
-          PresentacionProducto(
-            unidad: "Pieza ch",
-            tamano: 1,
-            precio: 120,
-            stock: 100,
-          ),
-          PresentacionProducto(
-            unidad: "Pieza med",
-            tamano: 1,
-            precio: 180,
-            stock: 80,
-          ),
-          PresentacionProducto(
-            unidad: "Pieza gra",
-            tamano: 1,
-            precio: 250,
-            stock: 60,
-          ),
-        ],
-      ),
-      ProductoPreview(
-        idProducto: 6,
-        nombreProducto: "Líquido para Fumigar Folei",
-        descripcionProducto:
-            "Insecticida agrícola para control de plagas en cultivos.",
-        categoria: "Agroquímicos",
-        subcategoria: "Insecticidas",
-        uso: "Fumigación",
-        imagenUrl:
-            "https://delagarzamateriasprimas.com/wp-content/uploads/2024/07/liquido_fumigar.jpg",
-        presentaciones: [
-          PresentacionProducto(
-            unidad: "Litro",
-            tamano: 1,
-            precio: 180,
-            stock: 90,
-          ),
-          PresentacionProducto(
-            unidad: "Galón",
-            tamano: 4,
-            precio: 650,
-            stock: 50,
-          ),
-          PresentacionProducto(
-            unidad: "Bidón",
-            tamano: 20,
-            precio: 2800,
-            stock: 30,
-          ),
-        ],
-      ),
-      ProductoPreview(
-        idProducto: 7,
-        nombreProducto: "Alimento de Puerco 30/70",
-        descripcionProducto:
-            "Alimento balanceado para cerdos con 30% proteína y 70% carbohidratos.",
-        categoria: "Alimentos",
-        subcategoria: "Puerco",
-        uso: "Nutrición animal",
-        imagenUrl:
-            "https://delagarzamateriasprimas.com/wp-content/uploads/2024/07/alimento_puerco.jpg",
-        presentaciones: [
-          PresentacionProducto(unidad: "Kg", tamano: 1, precio: 45, stock: 200),
-          PresentacionProducto(
-            unidad: "Bulto",
-            tamano: 25,
-            precio: 850,
-            stock: 80,
-          ),
-          PresentacionProducto(
-            unidad: "Bulto",
-            tamano: 40,
-            precio: 1200,
-            stock: 60,
-          ),
-        ],
-      ),
-      ProductoPreview(
-        idProducto: 8,
-        nombreProducto: "Alimento para Perro",
-        descripcionProducto:
-            "Croquetas premium para perros de todas las edades.",
-        categoria: "Alimentos",
-        subcategoria: "Perros",
-        uso: "Mascotas",
-        imagenUrl:
-            "https://delagarzamateriasprimas.com/wp-content/uploads/2024/07/alimento_perro.jpg",
-        presentaciones: [
-          PresentacionProducto(unidad: "Kg", tamano: 1, precio: 70, stock: 150),
-          PresentacionProducto(
-            unidad: "Bulto",
-            tamano: 20,
-            precio: 1200,
-            stock: 100,
-          ),
-          PresentacionProducto(
-            unidad: "Bulto",
-            tamano: 40,
-            precio: 2000,
-            stock: 50,
-          ),
-        ],
-      ),
-      ProductoPreview(
-        idProducto: 9,
-        nombreProducto: "Líquido para Fumigar Folei",
-        descripcionProducto:
-            "Insecticida agrícola para control de plagas en cultivos.",
-        categoria: "Agroquímicos",
-        subcategoria: "Insecticidas",
-        uso: "Fumigación",
-        imagenUrl:
-            "https://delagarzamateriasprimas.com/wp-content/uploads/2024/07/liquido_fumigar.jpg",
-        presentaciones: [
-          PresentacionProducto(
-            unidad: "Litro",
-            tamano: 1,
-            precio: 180,
-            stock: 90,
-          ),
-          PresentacionProducto(
-            unidad: "Galón",
-            tamano: 4,
-            precio: 650,
-            stock: 50,
-          ),
-          PresentacionProducto(
-            unidad: "Bidón",
-            tamano: 20,
-            precio: 2800,
-            stock: 30,
-          ),
-        ],
-      ),
-      ProductoPreview(
-        idProducto: 10,
-        nombreProducto: "Comedero de Pollo",
-        descripcionProducto:
-            "Comedero plástico resistente para pollos en diferentes tamaños.",
-        categoria: "Accesorios",
-        subcategoria: "Aves",
-        uso: "Equipamiento",
-        imagenUrl:
-            "https://delagarzamateriasprimas.com/wp-content/uploads/2024/07/comedero_pollo.jpg",
-        presentaciones: [
-          PresentacionProducto(
-            unidad: "Pieza ch",
-            tamano: 1,
-            precio: 120,
-            stock: 100,
-          ),
-          PresentacionProducto(
-            unidad: "Pieza med",
-            tamano: 1,
-            precio: 180,
-            stock: 80,
-          ),
-          PresentacionProducto(
-            unidad: "Pieza gra",
-            tamano: 1,
-            precio: 250,
-            stock: 60,
-          ),
-        ],
-      ),
-    ];
+  Future<void> _cargarProductos() async {
+    setState(() { _isLoading = true; _errorMsg = null; });
+    try {
+      final lista = await ProductoService.getCatalogo();
+      if (!mounted) return;
+      setState(() { _productos = lista; _isLoading = false; });
+      _animationController.forward();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() { _isLoading = false; _errorMsg = e.toString(); });
+    }
   }
 }

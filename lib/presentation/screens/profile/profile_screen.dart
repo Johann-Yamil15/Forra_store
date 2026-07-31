@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:forra_store/core/theme/neumorphic_colors.dart';
 import 'package:forra_store/core/theme/theme_provider.dart';
-import 'package:forra_store/core/utils/AuthProvider.dart';
+import 'package:forra_store/core/utils/auth_provider.dart';
 import 'package:forra_store/core/utils/neumorphic_style.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';

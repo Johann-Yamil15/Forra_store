@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:forra_store/core/theme/neumorphic_colors.dart';
 import 'package:forra_store/core/utils/neumorphic_style.dart';
 import 'package:forra_store/data/models/cart_item.dart';
@@ -69,6 +69,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     Provider.of<CartProvider>(context, listen: false).addItem(
       CartItem(
         idProducto: widget.productoPreview.idProducto,
+        idPresentacion: _selected!.idPresentacion,
         nombreProducto: widget.productoPreview.nombreProducto,
         imagenUrl: widget.productoPreview.imagenUrl,
         unidad: _selected!.unidad,
@@ -136,7 +137,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                           child: Icon(
                             Icons.image_not_supported_outlined,
                             size: 80,
-                            color: colors.text.withOpacity(0.7),
+                            color: colors.text.withValues(alpha: 0.7),
                           ),
                         ),
               ),
@@ -216,7 +217,7 @@ class _Header extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           '${p.categoria} • ${p.subcategoria} • ${p.uso}',
-          style: TextStyle(color: colors.text.withOpacity(0.7)),
+          style: TextStyle(color: colors.text.withValues(alpha: 0.7)),
         ),
       ],
     );
@@ -248,7 +249,7 @@ class _Description extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             p.descripcionProducto,
-            style: TextStyle(color: colors.text.withOpacity(0.7), height: 1.5),
+            style: TextStyle(color: colors.text.withValues(alpha: 0.7), height: 1.5),
           ),
         ],
       ),
@@ -275,7 +276,6 @@ class _CartSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final total = selected.precio * cantidad;
 
     return Container(
@@ -339,7 +339,7 @@ class _CartSection extends StatelessWidget {
                       'Precio unitario',
                       style: TextStyle(
                         fontSize: 12,
-                        color: colors.text.withOpacity(0.6),
+                        color: colors.text.withValues(alpha: 0.6),
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -360,7 +360,7 @@ class _CartSection extends StatelessWidget {
                       'Total',
                       style: TextStyle(
                         fontSize: 12,
-                        color: colors.text.withOpacity(0.6),
+                        color: colors.text.withValues(alpha: 0.6),
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -466,7 +466,7 @@ class _QtyButton extends StatelessWidget {
         child: Icon(
           icon,
           size: 20,
-          color: disabled ? colors.text.withOpacity(0.4) : colors.primary,
+          color: disabled ? colors.text.withValues(alpha: 0.4) : colors.primary,
         ),
       ),
     );

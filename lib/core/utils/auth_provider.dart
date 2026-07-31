@@ -1,23 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:forra_store/data/services/auth_service.dart';
 
 class AuthProvider with ChangeNotifier {
   bool _isLoggedIn = false;
   DateTime? _expiryDate;
   String? _username;
   String? _role;
+  int? _idUsuario;
 
   bool get isLoggedIn => _isLoggedIn;
   String? get username => _username;
   String? get role => _role;
+  int? get idUsuario => _idUsuario;
 
-  /// Inicializar sesión guardada
   Future<void> loadSession() async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString("session_token");
-    final expiryString = prefs.getString("session_expiry");
-    _username = prefs.getString("session_username");
-    _role = prefs.getString("session_role");
+    final token = prefs.getString('session_token');
+    final expiryString = prefs.getString('session_expiry');
+    _username = prefs.getString('session_username');
+    _role = prefs.getString('session_role');
+    _idUsuario = prefs.getInt('session_id_usuario');
 
     if (token != null && expiryString != null) {
       final expiry = DateTime.tryParse(expiryString);
@@ -31,23 +34,25 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  /// Guardar sesión (usuario + rol + token)
-  Future<void> login(String token, String username, String role) async {
+  /// Login contra la API. Lanza [ApiException] si las credenciales fallan.
+  Future<void> loginWithApi(String username, String password) async {
+    final result = await AuthService.login(username, password);
     final prefs = await SharedPreferences.getInstance();
     _expiryDate = DateTime.now().add(const Duration(hours: 8));
 
-    await prefs.setString("session_token", token);
-    await prefs.setString("session_expiry", _expiryDate!.toIso8601String());
-    await prefs.setString("session_username", username);
-    await prefs.setString("session_role", role);
+    await prefs.setString('session_token', 'api_session');
+    await prefs.setString('session_expiry', _expiryDate!.toIso8601String());
+    await prefs.setString('session_username', result.username);
+    await prefs.setString('session_role', result.rol);
+    await prefs.setInt('session_id_usuario', result.idUsuario);
 
-    _username = username;
-    _role = role;
+    _idUsuario = result.idUsuario;
+    _username = result.username;
+    _role = result.rol;
     _isLoggedIn = true;
     notifyListeners();
   }
 
-  /// Cerrar sesión
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
@@ -56,6 +61,7 @@ class AuthProvider with ChangeNotifier {
     _expiryDate = null;
     _username = null;
     _role = null;
+    _idUsuario = null;
     notifyListeners();
   }
 }

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../core/theme/neumorphic_colors.dart';
 import '../../core/utils/neumorphic_style.dart';
 
@@ -43,8 +43,8 @@ class _NeumorphicButtonState extends State<NeumorphicButton> {
           onTapDown: (_) => _setPressed(true),
           onTapUp: (_) => _setPressed(false),
           onTapCancel: () => _setPressed(false),
-          splashColor: widget.colors.primary.withOpacity(0.15),
-          hoverColor: widget.colors.primary.withOpacity(0.05),
+          splashColor: widget.colors.primary.withValues(alpha: 0.15),
+          hoverColor: widget.colors.primary.withValues(alpha: 0.05),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 120),
             padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),

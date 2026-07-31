@@ -1,10 +1,12 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:forra_store/core/theme/neumorphic_colors.dart';
-import 'package:forra_store/core/utils/neumorphic_style.dart';
+import 'package:forra_store/presentation/providers/cart_provider.dart';
 import 'package:forra_store/presentation/screens/home/productos_screen.dart';
 import 'package:forra_store/presentation/screens/home/cart_screen.dart';
+import 'package:forra_store/presentation/screens/home/pedidos_screen.dart';
 import 'package:forra_store/presentation/screens/profile/profile_screen.dart';
+import 'package:provider/provider.dart';
 
 class MainScreenTrabajador extends StatefulWidget {
   const MainScreenTrabajador({super.key});
@@ -20,7 +22,7 @@ class _MainScreenTrabajadorState extends State<MainScreenTrabajador> {
   final List<Widget> _screens = const [
     ProductosScreen(),
     CartScreen(),
-    Placeholder(child: Center(child: Text('Historial (Próximamente)', style: TextStyle(color: Colors.grey)))),
+    PedidosScreen(),
     ProfileScreen(),
   ];
 
@@ -77,6 +79,7 @@ class _MainScreenTrabajadorState extends State<MainScreenTrabajador> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colors = isDark ? NeumorphicColors.dark : NeumorphicColors.light;
+    final cartCount = context.watch<CartProvider>().totalItems;
 
     return Scaffold(
       backgroundColor: colors.background,
@@ -95,11 +98,12 @@ class _MainScreenTrabajadorState extends State<MainScreenTrabajador> {
           ),
         ],
       ),
-      bottomNavigationBar: _InstagramStyleNavBar(
+      bottomNavigationBar: _FloatingNavBar(
         colors: colors,
         items: _navItems,
         selectedIndex: _selectedIndex,
         onTap: _onBarTap,
+        cartItemCount: cartCount,
       ),
     );
   }
@@ -120,7 +124,7 @@ class _InternalAppBar extends StatelessWidget {
           color: colors.background,
           border: Border(
             bottom: BorderSide(
-              color: colors.darkShadow.withOpacity(isDark ? 0.2 : 0.4),
+              color: colors.darkShadow.withValues(alpha: isDark ? 0.2 : 0.4),
               width: 1.2,
             ),
           ),
@@ -130,7 +134,7 @@ class _InternalAppBar extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: colors.primary.withOpacity(0.1),
+                color: colors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(Icons.agriculture, color: colors.primary, size: 22),
@@ -158,80 +162,141 @@ class _InternalAppBar extends StatelessWidget {
   }
 }
 
-class _InstagramStyleNavBar extends StatelessWidget {
+class _FloatingNavBar extends StatelessWidget {
   final NeumorphicColors colors;
   final List<_NavItem> items;
   final int selectedIndex;
   final ValueChanged<int> onTap;
+  final int cartItemCount;
 
-  const _InstagramStyleNavBar({
+  const _FloatingNavBar({
     required this.colors,
     required this.items,
     required this.selectedIndex,
     required this.onTap,
+    required this.cartItemCount,
   });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.background,
-        border: Border(
-          top: BorderSide(
-            color: colors.darkShadow.withOpacity(isDark ? 0.2 : 0.4),
-            width: 1.2,
-          ),
-        ),
-      ),
-      child: SafeArea(
-        child: Container(
-          height: 65,
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: List.generate(items.length, (index) {
-              final isSelected = selectedIndex == index;
-              final item = items[index];
 
-              return Expanded(
-                child: InkWell(
-                  onTap: () => onTap(index),
-                  highlightColor: Colors.transparent,
-                  splashColor: Colors.transparent,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        padding: const EdgeInsets.all(10),
-                        decoration: isSelected 
-                            ? BoxDecoration(
-                                color: colors.primary.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(14),
-                              )
-                            : const BoxDecoration(),
-                        child: Icon(
-                          isSelected ? item.activeIcon : item.icon,
-                          color: isSelected ? colors.primary : colors.text.withOpacity(0.5),
-                          size: 26,
-                        ),
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 14),
+        child: Container(
+          height: 68,
+          decoration: BoxDecoration(
+            color: colors.background,
+            borderRadius: BorderRadius.circular(32),
+            boxShadow: [
+              BoxShadow(
+                color: colors.darkShadow.withValues(alpha: isDark ? 0.4 : 0.18),
+                blurRadius: 24,
+                offset: const Offset(0, 10),
+              ),
+              BoxShadow(
+                color: colors.lightShadow.withValues(alpha: isDark ? 0.05 : 0.9),
+                blurRadius: 12,
+                offset: const Offset(0, -4),
+              ),
+            ],
+          ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final itemWidth = constraints.maxWidth / items.length;
+
+              return Stack(
+                children: [
+                  // ── Píldora deslizante ──
+                  AnimatedPositioned(
+                    duration: const Duration(milliseconds: 320),
+                    curve: Curves.easeInOutCubic,
+                    left: selectedIndex * itemWidth + 10,
+                    top: 10,
+                    bottom: 10,
+                    width: itemWidth - 20,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: colors.primary.withValues(alpha: isDark ? 0.18 : 0.1),
+                        borderRadius: BorderRadius.circular(22),
                       ),
-                      const SizedBox(height: 2),
-                      if (isSelected)
-                        Container(
-                          width: 4,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: colors.primary,
-                            shape: BoxShape.circle,
+                    ),
+                  ),
+
+                  // ── Items ──
+                  Row(
+                    children: List.generate(items.length, (index) {
+                      final isSelected = selectedIndex == index;
+                      final item = items[index];
+
+                      return Expanded(
+                        child: GestureDetector(
+                          onTap: () => onTap(index),
+                          behavior: HitTestBehavior.opaque,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              // Icono con badge y escala animada
+                              Badge(
+                                isLabelVisible: index == 1 && cartItemCount > 0,
+                                label: Text(
+                                  '$cartItemCount',
+                                  style: const TextStyle(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                child: AnimatedScale(
+                                  scale: isSelected ? 1.18 : 1.0,
+                                  duration: const Duration(milliseconds: 300),
+                                  curve: Curves.easeOutBack,
+                                  child: AnimatedSwitcher(
+                                    duration: const Duration(milliseconds: 200),
+                                    child: Icon(
+                                      isSelected ? item.activeIcon : item.icon,
+                                      key: ValueKey('${index}_$isSelected'),
+                                      color: isSelected
+                                          ? colors.primary
+                                          : colors.text.withValues(alpha: 0.35),
+                                      size: 24,
+                                    ),
+                                  ),
+                                ),
+                              ),
+
+                              // Label animado — solo visible cuando está seleccionado
+                              AnimatedSize(
+                                duration: const Duration(milliseconds: 220),
+                                curve: Curves.easeInOut,
+                                child: isSelected
+                                    ? Padding(
+                                        padding: const EdgeInsets.only(top: 4),
+                                        child: AnimatedOpacity(
+                                          opacity: isSelected ? 1.0 : 0.0,
+                                          duration: const Duration(milliseconds: 200),
+                                          child: Text(
+                                            item.label,
+                                            style: TextStyle(
+                                              fontSize: 9,
+                                              fontWeight: FontWeight.w800,
+                                              color: colors.primary,
+                                              letterSpacing: 0.4,
+                                            ),
+                                          ),
+                                        ),
+                                      )
+                                    : const SizedBox.shrink(),
+                              ),
+                            ],
                           ),
                         ),
-                    ],
+                      );
+                    }),
                   ),
-                ),
+                ],
               );
-            }),
+            },
           ),
         ),
       ),

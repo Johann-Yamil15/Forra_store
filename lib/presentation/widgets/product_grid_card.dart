@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../core/theme/neumorphic_colors.dart';
 import '../../core/utils/neumorphic_style.dart';
 import '../../data/models/producto_preview.dart';
@@ -55,7 +55,7 @@ class ProductGridCard extends StatelessWidget {
                     left: 8,
                     child: _badge(
                       text: 'Desde \$${minPrice.toStringAsFixed(0)}',
-                      color: colors.background.withOpacity(0.85),
+                      color: colors.background.withValues(alpha: 0.85),
                       textColor: colors.text,
                     ),
                   ),
@@ -111,9 +111,9 @@ class ProductGridCard extends StatelessWidget {
   // ───── Helpers ─────
 
   Widget _buildImage() {
-    if (producto.imagenUrl != null && producto.imagenUrl!.isNotEmpty) {
+    if (producto.imagenUrl.isNotEmpty) {
       return Image.network(
-        producto.imagenUrl!,
+        producto.imagenUrl,
         fit: BoxFit.cover,
         width: double.infinity,
         height: double.infinity,
@@ -125,7 +125,7 @@ class ProductGridCard extends StatelessWidget {
 
   Widget _imagePlaceholder() {
     return Container(
-      color: Colors.grey.withOpacity(0.15),
+      color: Colors.grey.withValues(alpha: 0.15),
       child: const Center(
         child: Icon(
           Icons.image_not_supported_outlined,

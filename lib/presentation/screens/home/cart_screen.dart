@@ -1,11 +1,13 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:forra_store/core/utils/auth_provider.dart';
 import 'package:forra_store/presentation/providers/cart_provider.dart';
 import 'package:forra_store/core/theme/neumorphic_colors.dart';
 import 'package:forra_store/core/utils/neumorphic_style.dart';
 import 'package:forra_store/data/models/cart_item.dart';
-import 'package:forra_store/data/models/cliente.dart';
+import 'package:forra_store/data/models/pedido.dart';
+import 'package:forra_store/presentation/providers/pedidos_provider.dart';
 
 class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
@@ -33,7 +35,7 @@ class CartScreen extends StatelessWidget {
                     },
                   ),
           ),
-          if (cartProvider.items.isNotEmpty) _buildCheckoutSection(cartProvider, colors),
+          if (cartProvider.items.isNotEmpty) _buildCheckoutSection(context, cartProvider, colors),
         ],
       ),
     );
@@ -47,7 +49,7 @@ class CartScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: NeumorphicStyle.elevated(colors, radius: 100),
-            child: Icon(Icons.shopping_cart_outlined, size: 64, color: colors.text.withOpacity(0.3)),
+            child: Icon(Icons.shopping_cart_outlined, size: 64, color: colors.text.withValues(alpha: 0.3)),
           ),
           const SizedBox(height: 24),
           Text(
@@ -55,7 +57,7 @@ class CartScreen extends StatelessWidget {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: colors.text.withOpacity(0.5),
+              color: colors.text.withValues(alpha: 0.5),
             ),
           ),
         ],
@@ -63,17 +65,17 @@ class CartScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCheckoutSection(CartProvider cartProvider, NeumorphicColors colors) {
+  Widget _buildCheckoutSection(BuildContext context, CartProvider cartProvider, NeumorphicColors colors) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       decoration: BoxDecoration(
         color: colors.background,
         border: Border(
-          top: BorderSide(color: colors.darkShadow.withOpacity(0.15)),
+          top: BorderSide(color: colors.darkShadow.withValues(alpha: 0.15)),
         ),
         boxShadow: [
           BoxShadow(
-            color: colors.darkShadow.withOpacity(0.05),
+            color: colors.darkShadow.withValues(alpha: 0.05),
             offset: const Offset(0, -4),
             blurRadius: 10,
           ),
@@ -93,12 +95,12 @@ class CartScreen extends StatelessWidget {
                   children: [
                     Text(
                       'Subtotal',
-                      style: TextStyle(color: colors.text.withOpacity(0.6)),
+                      style: TextStyle(color: colors.text.withValues(alpha: 0.6)),
                     ),
                     Text(
                       '\$${cartProvider.totalOriginal.toStringAsFixed(2)}',
                       style: TextStyle(
-                        color: colors.text.withOpacity(0.6),
+                        color: colors.text.withValues(alpha: 0.6),
                         decoration: TextDecoration.lineThrough,
                       ),
                     ),
@@ -153,9 +155,92 @@ class CartScreen extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             GestureDetector(
-              onTap: () {
+              onTap: cartProvider.isCheckingOut ? null : () async {
+                if (cartProvider.items.isEmpty) return;
                 HapticFeedback.heavyImpact();
-                // Acción de finalizar compra
+
+                final auth = context.read<AuthProvider>();
+                final pedidosProvider = context.read<PedidosProvider>();
+                final nombreCliente =
+                    cartProvider.selectedCliente?.nombre ?? 'Venta al Público';
+                final snapshot = List<CartItem>.from(cartProvider.items.map((item) {
+                  final efectivo = cartProvider.getItemPrice(item);
+                  if (efectivo == item.precioUnitario) return item;
+                  return CartItem(
+                    idProducto: item.idProducto,
+                    idPresentacion: item.idPresentacion,
+                    nombreProducto: item.nombreProducto,
+                    imagenUrl: item.imagenUrl,
+                    unidad: item.unidad,
+                    tamano: item.tamano,
+                    precioUnitario: item.precioUnitario,
+                    precioEfectivo: efectivo,
+                    cantidad: item.cantidad,
+                  );
+                }));
+
+                try {
+                  final idVenta = await cartProvider.checkout(
+                    idUsuario: auth.idUsuario ?? 0,
+                  );
+
+                  final nuevoPedido = Pedido(
+                    id: idVenta.toString(),
+                    fecha: DateTime.now(),
+                    idCliente: cartProvider.selectedCliente?.id,
+                    nombreCliente: nombreCliente,
+                    totalOriginal: cartProvider.totalOriginal,
+                    descuento: cartProvider.totalDescuento,
+                    totalFinal: cartProvider.totalFinal,
+                    items: snapshot,
+                  );
+                  pedidosProvider.agregarPedido(nuevoPedido);
+                  cartProvider.clear();
+
+                  if (!context.mounted) return;
+                  showDialog(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                      backgroundColor: colors.background,
+                      title: Center(
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: colors.primary.withValues(alpha: 0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(Icons.check_circle_outline, color: colors.primary, size: 50),
+                        ),
+                      ),
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('¡Venta Exitosa!', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: colors.text)),
+                          const SizedBox(height: 12),
+                          Text('Pedido #$idVenta registrado correctamente.', textAlign: TextAlign.center, style: TextStyle(color: colors.text.withValues(alpha: 0.6))),
+                        ],
+                      ),
+                      actions: [
+                        Container(
+                          width: double.infinity,
+                          margin: const EdgeInsets.symmetric(horizontal: 10),
+                          child: ElevatedButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            style: ElevatedButton.styleFrom(backgroundColor: colors.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), padding: const EdgeInsets.symmetric(vertical: 14)),
+                            child: const Text('Entendido', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                      ],
+                    ),
+                  );
+                } catch (e) {
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error al registrar venta: $e'), backgroundColor: Colors.red.shade600, behavior: SnackBarBehavior.floating),
+                  );
+                }
               },
               child: Container(
                 width: double.infinity,
@@ -163,8 +248,10 @@ class CartScreen extends StatelessWidget {
                 decoration: NeumorphicStyle.elevated(colors, radius: 16).copyWith(
                   color: colors.primary,
                 ),
-                child: const Center(
-                  child: Text(
+                child: Center(
+                  child: cartProvider.isCheckingOut
+                    ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
+                    : const Text(
                     'Finalizar Compra',
                     style: TextStyle(
                       color: Colors.white,
@@ -201,13 +288,13 @@ class CartScreen extends StatelessWidget {
           style: TextStyle(
             color: cartProvider.selectedCliente != null
                 ? colors.text
-                : colors.text.withOpacity(0.5),
+                : colors.text.withValues(alpha: 0.5),
             fontWeight: cartProvider.selectedCliente != null
                 ? FontWeight.bold
                 : FontWeight.normal,
           ),
         ),
-        trailing: Icon(Icons.keyboard_arrow_down, color: colors.text.withOpacity(0.5)),
+        trailing: Icon(Icons.keyboard_arrow_down, color: colors.text.withValues(alpha: 0.5)),
         onTap: () => _showCustomerPicker(context, cartProvider, colors),
       ),
     );
@@ -226,7 +313,7 @@ class CartScreen extends StatelessWidget {
         String searchQuery = '';
         return StatefulBuilder(
           builder: (context, setModalState) {
-            final filteredClientes = cartProvider.mockClientes
+            final filteredClientes = cartProvider.clientes
                 .where((c) => c.nombre.toLowerCase().contains(searchQuery.toLowerCase()))
                 .toList();
 
@@ -243,7 +330,7 @@ class CartScreen extends StatelessWidget {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: colors.text.withOpacity(0.1),
+                      color: colors.text.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -263,11 +350,11 @@ class CartScreen extends StatelessWidget {
                       prefixIcon: const Icon(Icons.search),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: colors.darkShadow.withOpacity(0.2)),
+                        borderSide: BorderSide(color: colors.darkShadow.withValues(alpha: 0.2)),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: colors.darkShadow.withOpacity(0.1)),
+                        borderSide: BorderSide(color: colors.darkShadow.withValues(alpha: 0.1)),
                       ),
                     ),
                     onChanged: (val) {
@@ -293,7 +380,7 @@ class CartScreen extends StatelessWidget {
                         final cliente = filteredClientes[index - 1];
                         return ListTile(
                           leading: CircleAvatar(
-                            backgroundColor: colors.primary.withOpacity(0.1),
+                            backgroundColor: colors.primary.withValues(alpha: 0.1),
                             child: Text(
                               cliente.nombre[0],
                               style: TextStyle(color: colors.primary),
@@ -365,22 +452,22 @@ class _CartItemTile extends StatelessWidget {
                       '${item.tamano} ${item.unidad} • ',
                       style: TextStyle(
                         fontSize: 12,
-                        color: colors.text.withOpacity(0.6),
+                        color: colors.text.withValues(alpha: 0.6),
                       ),
                     ),
-                    if (context.read<CartProvider>().getItemPrice(item) <
+                    if (context.watch<CartProvider>().getItemPrice(item) <
                         item.precioUnitario) ...[
                       Text(
                         '\$${item.precioUnitario.toStringAsFixed(2)}',
                         style: TextStyle(
                           fontSize: 12,
-                          color: colors.text.withOpacity(0.4),
+                          color: colors.text.withValues(alpha: 0.4),
                           decoration: TextDecoration.lineThrough,
                         ),
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        '\$${context.read<CartProvider>().getItemPrice(item).toStringAsFixed(2)}',
+                        '\$${context.watch<CartProvider>().getItemPrice(item).toStringAsFixed(2)}',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../theme/neumorphic_colors.dart';
 
 class NeumorphicStyle {
@@ -16,13 +16,13 @@ class NeumorphicStyle {
       borderRadius: BorderRadius.circular(radius),
       border: Border.all(
         color: isDark 
-            ? colors.lightShadow.withOpacity(0.1) 
-            : colors.darkShadow.withOpacity(0.2),
+            ? colors.lightShadow.withValues(alpha: 0.1) 
+            : colors.darkShadow.withValues(alpha: 0.2),
         width: 1.2,
       ),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withOpacity(isDark ? 0.3 : 0.08),
+          color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08),
           offset: const Offset(0, 4),
           blurRadius: 12,
         ),
@@ -39,13 +39,13 @@ class NeumorphicStyle {
     final bool isDark = colors.background.computeLuminance() < 0.5;
     return BoxDecoration(
       color: isDark 
-          ? Colors.white.withOpacity(0.03) 
-          : Colors.black.withOpacity(0.03),
+          ? Colors.white.withValues(alpha: 0.03) 
+          : Colors.black.withValues(alpha: 0.03),
       borderRadius: BorderRadius.circular(radius),
       border: Border.all(
         color: isDark 
-            ? colors.lightShadow.withOpacity(0.1) 
-            : colors.darkShadow.withOpacity(0.15),
+            ? colors.lightShadow.withValues(alpha: 0.1) 
+            : colors.darkShadow.withValues(alpha: 0.15),
         width: 1,
       ),
     );

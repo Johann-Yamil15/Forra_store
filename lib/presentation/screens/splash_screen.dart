@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'package:forra_store/core/utils/AuthProvider.dart';
+import 'package:forra_store/core/utils/auth_provider.dart';
 import 'package:forra_store/core/theme/neumorphic_colors.dart';
 import 'package:forra_store/core/utils/neumorphic_style.dart';
 
@@ -115,7 +115,7 @@ class _SplashScreenState extends State<SplashScreen>
                   'Gestión inteligente forrajera',
                   style: TextStyle(
                     fontSize: 14,
-                    color: colors.text.withOpacity(0.7),
+                    color: colors.text.withValues(alpha: 0.7),
                   ),
                 ),
               ],
