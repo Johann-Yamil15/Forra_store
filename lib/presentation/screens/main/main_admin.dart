@@ -12,6 +12,7 @@ import 'package:forra_store/presentation/screens/admin/producto_admin_screen.dar
 import 'package:forra_store/presentation/screens/home/cart_screen.dart';
 import 'package:forra_store/presentation/screens/home/productos_screen.dart';
 import 'package:forra_store/presentation/screens/profile/profile_screen.dart';
+import 'package:forra_store/presentation/widgets/brand_mark.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
@@ -113,40 +114,38 @@ class _AdminAppBar extends StatelessWidget {
     return SafeArea(
       bottom: false,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        padding: const EdgeInsets.fromLTRB(20, 14, 20, 16),
         decoration: BoxDecoration(
           color: colors.background,
-          border: Border(
-            bottom: BorderSide(
-              color: colors.darkShadow.withValues(alpha: isDark ? 0.2 : 0.35),
-              width: 1.2,
+          boxShadow: [
+            BoxShadow(
+              color: colors.darkShadow.withValues(alpha: isDark ? 0.28 : 0.10),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
             ),
-          ),
+          ],
         ),
         child: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: colors.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(Icons.admin_panel_settings, color: colors.primary, size: 22),
+            BrandMark(
+              size: 40,
+              glyphColor: colors.primary,
+              tileColor: colors.primary.withValues(alpha: 0.12),
             ),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Forra Store', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, letterSpacing: -0.6, color: colors.text)),
+                  Text('Forra Store', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, letterSpacing: -0.5, color: colors.text)),
                   Text('Panel de Administración', style: TextStyle(fontSize: 11, color: colors.primary, fontWeight: FontWeight.w600)),
                 ],
               ),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: colors.primary.withValues(alpha: 0.1),
+                color: colors.primary.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text('Admin', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: colors.primary)),
@@ -182,20 +181,16 @@ class _AdminNavBar extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 14),
         child: Container(
-          height: 68,
+          height: 66,
           decoration: BoxDecoration(
             color: colors.background,
-            borderRadius: BorderRadius.circular(32),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: colors.darkShadow.withValues(alpha: isDark ? 0.25 : 0.10)),
             boxShadow: [
               BoxShadow(
-                color: colors.darkShadow.withValues(alpha: isDark ? 0.4 : 0.18),
-                blurRadius: 24,
-                offset: const Offset(0, 10),
-              ),
-              BoxShadow(
-                color: colors.lightShadow.withValues(alpha: isDark ? 0.05 : 0.9),
-                blurRadius: 12,
-                offset: const Offset(0, -4),
+                color: colors.darkShadow.withValues(alpha: isDark ? 0.3 : 0.12),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
               ),
             ],
           ),
@@ -213,8 +208,8 @@ class _AdminNavBar extends StatelessWidget {
                     width: itemWidth - 20,
                     child: Container(
                       decoration: BoxDecoration(
-                        color: colors.primary.withValues(alpha: isDark ? 0.18 : 0.1),
-                        borderRadius: BorderRadius.circular(22),
+                        color: colors.primary.withValues(alpha: isDark ? 0.20 : 0.12),
+                        borderRadius: BorderRadius.circular(18),
                       ),
                     ),
                   ),

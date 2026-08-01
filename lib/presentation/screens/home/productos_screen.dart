@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:forra_store/data/models/producto_preview.dart';
 import 'package:forra_store/data/services/producto_service.dart';
 import 'package:forra_store/presentation/screens/home/product_detail_screen.dart';
@@ -243,78 +243,58 @@ class _ProductosScreenState extends State<ProductosScreen>
   }
 
   Widget _buildFilters(NeumorphicColors colors) {
-    final active =
-        _selectedCategoria != null ||
-        _selectedSubcategoria != null ||
-        _selectedUso != null;
+    final activeCount = [
+      _selectedCategoria,
+      _selectedSubcategoria,
+      _selectedUso,
+    ].where((e) => e != null).length;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: NeumorphicStyle.elevated(colors, radius: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return SizedBox(
+      height: 42,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
         children: [
-          Row(
-            children: [
-              Icon(Icons.tune, color: colors.primary),
-              const SizedBox(width: 8),
-              Text(
-                'Filtros',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: colors.text,
-                ),
-              ),
-              const Spacer(),
-              if (active)
-                TextButton(
-                  onPressed: _clearFilters,
-                  child: const Text('Limpiar'),
-                ),
-            ],
+          _filterChip(
+            colors,
+            icon: Icons.tune_rounded,
+            label: 'Filtros',
+            badge: activeCount > 0 ? activeCount : null,
+            onTap: activeCount > 0 ? _clearFilters : null,
           ),
-          const SizedBox(height: 12),
-          SizedBox(
-            height: 40,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children: [
-                _chip(
-                  colors,
-                  _selectedCategoria ?? 'Categoría',
-                  _selectedCategoria != null,
-                  () => _showOptions(
-                    'Categorías',
-                    _categorias,
-                    _selectedCategoria,
-                    (v) => setState(() => _selectedCategoria = v),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                _chip(
-                  colors,
-                  _selectedSubcategoria ?? 'Subcategoría',
-                  _selectedSubcategoria != null,
-                  () => _showOptions(
-                    'Subcategorías',
-                    _subcategorias,
-                    _selectedSubcategoria,
-                    (v) => setState(() => _selectedSubcategoria = v),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                _chip(
-                  colors,
-                  _selectedUso ?? 'Uso',
-                  _selectedUso != null,
-                  () => _showOptions(
-                    'Usos',
-                    _usos,
-                    _selectedUso,
-                    (v) => setState(() => _selectedUso = v),
-                  ),
-                ),
-              ],
+          const SizedBox(width: 10),
+          _filterChip(
+            colors,
+            label: _selectedCategoria ?? 'Categoría',
+            filled: _selectedCategoria != null,
+            onTap: () => _showOptions(
+              'Categorías',
+              _categorias,
+              _selectedCategoria,
+              (v) => setState(() => _selectedCategoria = v),
+            ),
+          ),
+          const SizedBox(width: 10),
+          _filterChip(
+            colors,
+            label: _selectedSubcategoria ?? 'Subcategoría',
+            filled: _selectedSubcategoria != null,
+            onTap: () => _showOptions(
+              'Subcategorías',
+              _subcategorias,
+              _selectedSubcategoria,
+              (v) => setState(() => _selectedSubcategoria = v),
+            ),
+          ),
+          const SizedBox(width: 10),
+          _filterChip(
+            colors,
+            label: _selectedUso ?? 'Uso',
+            filled: _selectedUso != null,
+            onTap: () => _showOptions(
+              'Usos',
+              _usos,
+              _selectedUso,
+              (v) => setState(() => _selectedUso = v),
             ),
           ),
         ],
@@ -322,26 +302,54 @@ class _ProductosScreenState extends State<ProductosScreen>
     );
   }
 
-  Widget _chip(
-    NeumorphicColors colors,
-    String label,
-    bool selected,
-    VoidCallback onTap,
-  ) {
+  Widget _filterChip(
+    NeumorphicColors colors, {
+    IconData? icon,
+    required String label,
+    bool filled = false,
+    int? badge,
+    VoidCallback? onTap,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 120),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration:
-            selected
-                ? NeumorphicStyle.inset(colors)
-                : NeumorphicStyle.elevated(colors),
+        duration: const Duration(milliseconds: 160),
+        curve: Curves.easeOut,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: filled ? colors.primary : colors.text.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(20),
+          border: filled
+              ? null
+              : Border.all(color: colors.text.withValues(alpha: 0.12)),
+        ),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Text(label, style: TextStyle(color: colors.text)),
-            const SizedBox(width: 4),
-            Icon(Icons.arrow_drop_down, color: colors.text),
+            if (icon != null) ...[
+              Icon(icon, size: 16, color: filled ? Colors.white : colors.text.withValues(alpha: 0.65)),
+              const SizedBox(width: 6),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: filled ? Colors.white : colors.text.withValues(alpha: 0.75),
+              ),
+            ),
+            if (icon == null) ...[
+              const SizedBox(width: 2),
+              Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: filled ? Colors.white : colors.text.withValues(alpha: 0.5)),
+            ],
+            if (badge != null) ...[
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                decoration: BoxDecoration(color: colors.secondary, borderRadius: BorderRadius.circular(10)),
+                child: Text('$badge', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white)),
+              ),
+            ],
           ],
         ),
       ),

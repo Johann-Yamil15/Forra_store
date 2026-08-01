@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:forra_store/core/theme/neumorphic_colors.dart';
 import 'package:forra_store/presentation/providers/cart_provider.dart';
@@ -6,6 +6,7 @@ import 'package:forra_store/presentation/screens/home/productos_screen.dart';
 import 'package:forra_store/presentation/screens/home/cart_screen.dart';
 import 'package:forra_store/presentation/screens/home/pedidos_screen.dart';
 import 'package:forra_store/presentation/screens/profile/profile_screen.dart';
+import 'package:forra_store/presentation/widgets/brand_mark.dart';
 import 'package:provider/provider.dart';
 
 class MainScreenTrabajador extends StatefulWidget {
@@ -119,41 +120,48 @@ class _InternalAppBar extends StatelessWidget {
     return SafeArea(
       bottom: false,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        padding: const EdgeInsets.fromLTRB(20, 14, 20, 16),
         decoration: BoxDecoration(
           color: colors.background,
-          border: Border(
-            bottom: BorderSide(
-              color: colors.darkShadow.withValues(alpha: isDark ? 0.2 : 0.4),
-              width: 1.2,
+          boxShadow: [
+            BoxShadow(
+              color: colors.darkShadow.withValues(alpha: isDark ? 0.28 : 0.10),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
             ),
-          ),
+          ],
         ),
         child: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: colors.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(Icons.agriculture, color: colors.primary, size: 22),
+            BrandMark(
+              size: 40,
+              glyphColor: colors.primary,
+              tileColor: colors.primary.withValues(alpha: 0.12),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 14),
             Expanded(
               child: Text(
                 'Forra Store',
                 style: TextStyle(
-                  fontSize: 22,
+                  fontSize: 20,
                   fontWeight: FontWeight.w800,
-                  letterSpacing: -0.8,
+                  letterSpacing: -0.6,
                   color: colors.text,
                 ),
               ),
             ),
-            IconButton(
-              onPressed: () {},
-              icon: Icon(Icons.notifications_none, color: colors.text),
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: colors.text.withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: IconButton(
+                padding: EdgeInsets.zero,
+                onPressed: () {},
+                icon: Icon(Icons.notifications_none_rounded, color: colors.text.withValues(alpha: 0.7), size: 20),
+              ),
             ),
           ],
         ),
@@ -185,20 +193,16 @@ class _FloatingNavBar extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 14),
         child: Container(
-          height: 68,
+          height: 66,
           decoration: BoxDecoration(
             color: colors.background,
-            borderRadius: BorderRadius.circular(32),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: colors.darkShadow.withValues(alpha: isDark ? 0.25 : 0.10)),
             boxShadow: [
               BoxShadow(
-                color: colors.darkShadow.withValues(alpha: isDark ? 0.4 : 0.18),
-                blurRadius: 24,
-                offset: const Offset(0, 10),
-              ),
-              BoxShadow(
-                color: colors.lightShadow.withValues(alpha: isDark ? 0.05 : 0.9),
-                blurRadius: 12,
-                offset: const Offset(0, -4),
+                color: colors.darkShadow.withValues(alpha: isDark ? 0.3 : 0.12),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
               ),
             ],
           ),
@@ -218,8 +222,8 @@ class _FloatingNavBar extends StatelessWidget {
                     width: itemWidth - 20,
                     child: Container(
                       decoration: BoxDecoration(
-                        color: colors.primary.withValues(alpha: isDark ? 0.18 : 0.1),
-                        borderRadius: BorderRadius.circular(22),
+                        color: colors.primary.withValues(alpha: isDark ? 0.20 : 0.12),
+                        borderRadius: BorderRadius.circular(18),
                       ),
                     ),
                   ),
