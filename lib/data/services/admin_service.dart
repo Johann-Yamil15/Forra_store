@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:forra_store/data/services/api_client.dart';
 
 // DTOs planos — AdminProvider los convierte a sus propios modelos
@@ -35,6 +36,15 @@ class AdminService {
 
   static Future<void> deletePresentacion(int id) async {
     await ApiClient.delete('/api/admin/presentaciones/$id');
+  }
+
+  static Future<String> subirImagenProducto(int idProducto, File imagen) async {
+    final data = await ApiClient.postFile(
+      '/api/admin/productos/$idProducto/imagen',
+      fieldName: 'imagen',
+      file: imagen,
+    );
+    return (data as Map<String, dynamic>)['imagenUrl'] as String;
   }
 
   static Future<int> addStock(int idPresentacion, int cantidad) async {

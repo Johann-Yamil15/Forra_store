@@ -1,4 +1,5 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:forra_store/core/constants/api_constants.dart';
 import 'package:forra_store/core/theme/neumorphic_colors.dart';
 import 'package:forra_store/core/utils/neumorphic_style.dart';
 import 'package:forra_store/data/models/cart_item.dart';
@@ -131,7 +132,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
               flexibleSpace: FlexibleSpaceBar(
                 background:
                     p.imagenUrl.isNotEmpty
-                        ? Image.network(p.imagenUrl, fit: BoxFit.cover)
+                        ? Image.network(ApiConstants.resolveImageUrl(p.imagenUrl), fit: BoxFit.cover)
                         : Container(
                           color: colors.background,
                           child: Icon(

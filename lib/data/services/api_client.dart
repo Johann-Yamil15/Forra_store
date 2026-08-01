@@ -60,4 +60,14 @@ class ApiClient {
     final res = await _client.delete(_uri(path), headers: _headers()).timeout(ApiConstants.timeout);
     return _parse(res);
   }
+
+  // Sube un archivo como multipart/form-data (ej. imagen de producto).
+  static Future<dynamic> postFile(String path, {required String fieldName, required File file}) async {
+    final request = http.MultipartRequest('POST', _uri(path))
+      ..headers[HttpHeaders.acceptHeader] = 'application/json'
+      ..files.add(await http.MultipartFile.fromPath(fieldName, file.path));
+    final streamed = await _client.send(request).timeout(ApiConstants.timeout);
+    final res = await http.Response.fromStream(streamed);
+    return _parse(res);
+  }
 }

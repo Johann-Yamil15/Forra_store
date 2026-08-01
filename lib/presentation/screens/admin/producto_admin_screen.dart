@@ -1,8 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:forra_store/core/constants/api_constants.dart';
 import 'package:forra_store/core/theme/neumorphic_colors.dart';
 import 'package:forra_store/core/utils/neumorphic_style.dart';
 import 'package:forra_store/presentation/providers/admin_provider.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 // ── Estado local de cada presentación ────────────────────────────
@@ -72,7 +75,10 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
   late final TextEditingController _categoriaCtrl;
   late final TextEditingController _subcategoriaCtrl;
   late final TextEditingController _usoCtrl;
-  late final TextEditingController _imagenUrlCtrl;
+
+  late String _existingImageUrl;
+  File? _pickedImage;
+  bool _isSaving = false;
 
   final List<_PresForm> _presentaciones = [];
   final List<int> _deletedIds = [];
@@ -86,7 +92,7 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
     _categoriaCtrl = TextEditingController(text: p?.categoria ?? '');
     _subcategoriaCtrl = TextEditingController(text: p?.subcategoria ?? '');
     _usoCtrl = TextEditingController(text: p?.uso ?? '');
-    _imagenUrlCtrl = TextEditingController(text: p?.imagenUrl ?? '');
+    _existingImageUrl = p?.imagenUrl ?? '';
     if (p != null) {
       for (final pr in p.presentaciones) {
         _presentaciones.add(_PresForm.fromExisting(pr));
@@ -102,11 +108,32 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
     _categoriaCtrl.dispose();
     _subcategoriaCtrl.dispose();
     _usoCtrl.dispose();
-    _imagenUrlCtrl.dispose();
     for (final f in _presentaciones) {
       f.dispose();
     }
     super.dispose();
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final XFile? file = await ImagePicker().pickImage(
+        source: source,
+        maxWidth: 1600,
+        maxHeight: 1600,
+        imageQuality: 85,
+      );
+      if (file == null) return;
+
+      final picked = File(file.path);
+      final sizeBytes = await picked.length();
+      if (sizeBytes > 5 * 1024 * 1024) {
+        _snack('La imagen supera 5 MB. Elige otra o toma una foto de menor resolución.');
+        return;
+      }
+      setState(() => _pickedImage = picked);
+    } catch (e) {
+      _snack('No se pudo acceder a la cámara/galería: $e');
+    }
   }
 
   void _addPresentacion() => setState(() => _presentaciones.add(_PresForm.empty()));
@@ -118,12 +145,14 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
     f.dispose();
   }
 
-  void _save() {
+  Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     if (_presentaciones.isEmpty) {
       _snack('Agrega al menos una presentación');
       return;
     }
+
+    setState(() => _isSaving = true);
 
     final provider = context.read<AdminProvider>();
     final nombre = _nombreCtrl.text.trim();
@@ -131,7 +160,6 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
     final categoria = _categoriaCtrl.text.trim().isEmpty ? 'Sin categoría' : _categoriaCtrl.text.trim();
     final subcategoria = _subcategoriaCtrl.text.trim();
     final uso = _usoCtrl.text.trim();
-    final imagenUrl = _imagenUrlCtrl.text.trim();
 
     // Persistir categorías y subcategorías nuevas
     if (!provider.categorias.contains(categoria)) provider.addCategoria(categoria);
@@ -153,40 +181,58 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
       );
     }).toList();
 
-    if (!widget.isEditing) {
-      provider.addProducto(ProductoAdmin(
-        id: 0,
-        nombre: nombre,
-        descripcion: descripcion,
-        categoria: categoria,
-        subcategoria: subcategoria,
-        uso: uso,
-        imagenUrl: imagenUrl,
-        presentaciones: presLista,
-      ));
-    } else {
-      final idP = widget.producto!.id;
-      provider.updateProducto(
-        idP,
-        nombre: nombre,
-        descripcion: descripcion,
-        categoria: categoria,
-        subcategoria: subcategoria,
-        uso: uso,
-        imagenUrl: imagenUrl,
-      );
-      for (final id in _deletedIds) {
-        provider.deletePresentacion(idP, id);
-      }
-      for (final f in presLista) {
-        if (f.id != 0) {
-          provider.updatePresentacion(idP, f.id, f);
-        } else {
-          provider.addPresentacion(idP, f);
+    try {
+      int idProducto;
+      if (!widget.isEditing) {
+        idProducto = await provider.addProducto(ProductoAdmin(
+          id: 0,
+          nombre: nombre,
+          descripcion: descripcion,
+          categoria: categoria,
+          subcategoria: subcategoria,
+          uso: uso,
+          imagenUrl: _existingImageUrl,
+          presentaciones: presLista,
+        ));
+      } else {
+        idProducto = widget.producto!.id;
+        await provider.updateProducto(
+          idProducto,
+          nombre: nombre,
+          descripcion: descripcion,
+          categoria: categoria,
+          subcategoria: subcategoria,
+          uso: uso,
+          imagenUrl: _existingImageUrl,
+        );
+        for (final id in _deletedIds) {
+          provider.deletePresentacion(idProducto, id);
+        }
+        for (final f in presLista) {
+          if (f.id != 0) {
+            provider.updatePresentacion(idProducto, f.id, f);
+          } else {
+            provider.addPresentacion(idProducto, f);
+          }
         }
       }
+
+      if (_pickedImage != null) {
+        try {
+          await provider.subirImagenProducto(idProducto, _pickedImage!);
+        } catch (e) {
+          if (mounted) _snack('Producto guardado, pero la imagen no se pudo subir: $e');
+        }
+      }
+
+      if (!mounted) return;
+      Navigator.pop(context);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSaving = false);
+        _snack('No se pudo guardar el producto: $e');
+      }
     }
-    Navigator.pop(context);
   }
 
   @override
@@ -210,7 +256,7 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: _save,
+            onPressed: _isSaving ? null : _save,
             child: Text('GUARDAR', style: TextStyle(fontWeight: FontWeight.w800, color: colors.primary, letterSpacing: 0.5)),
           ),
         ],
@@ -279,69 +325,7 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
             // ── Imagen ───────────────────────────────────────────
             _sectionLabel('Imagen', colors),
             const SizedBox(height: 12),
-            _fieldLabel('URL de imagen', colors),
-            const SizedBox(height: 6),
-            _textFormField(
-              controller: _imagenUrlCtrl,
-              hint: 'https://ejemplo.com/imagen.jpg',
-              colors: colors,
-              keyboardType: TextInputType.url,
-            ),
-            const SizedBox(height: 8),
-            // Preview reactivo
-            ValueListenableBuilder<TextEditingValue>(
-              valueListenable: _imagenUrlCtrl,
-              builder: (context, value, _) {
-                final url = value.text.trim();
-                if (url.isEmpty) {
-                  return Container(
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: colors.primary.withValues(alpha: 0.04),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: colors.primary.withValues(alpha: 0.08), width: 1.5),
-                    ),
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.image_outlined, color: colors.text.withValues(alpha: 0.2), size: 28),
-                          const SizedBox(height: 4),
-                          Text('Sin imagen', style: TextStyle(fontSize: 11, color: colors.text.withValues(alpha: 0.25))),
-                        ],
-                      ),
-                    ),
-                  );
-                }
-                return ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.network(
-                    url,
-                    height: 140,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      height: 80,
-                      decoration: BoxDecoration(
-                        color: colors.secondary.withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: colors.secondary.withValues(alpha: 0.2)),
-                      ),
-                      child: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.broken_image_outlined, color: colors.secondary.withValues(alpha: 0.5), size: 28),
-                            const SizedBox(height: 4),
-                            Text('No se pudo cargar la imagen', style: TextStyle(fontSize: 11, color: colors.secondary.withValues(alpha: 0.6))),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
+            _buildImagePicker(colors),
 
             const SizedBox(height: 28),
 
@@ -390,10 +374,131 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _save,
+        onPressed: _isSaving ? null : _save,
         backgroundColor: colors.primary,
-        icon: const Icon(Icons.check, color: Colors.white),
-        label: const Text('Guardar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        icon: _isSaving
+            ? const SizedBox(
+                width: 18, height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2.2, color: Colors.white),
+              )
+            : const Icon(Icons.check, color: Colors.white),
+        label: Text(_isSaving ? 'Guardando…' : 'Guardar', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+      ),
+    );
+  }
+
+  Widget _buildImagePicker(NeumorphicColors colors) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: _pickedImage != null
+              ? Image.file(
+                  _pickedImage!,
+                  height: 150,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                )
+              : (_existingImageUrl.isNotEmpty
+                  ? Image.network(
+                      ApiConstants.resolveImageUrl(_existingImageUrl),
+                      height: 150,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => _imagePlaceholder(colors, error: true),
+                    )
+                  : _imagePlaceholder(colors)),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: _imageSourceButton(
+                colors,
+                icon: Icons.photo_camera_outlined,
+                label: 'Cámara',
+                onTap: () => _pickImage(ImageSource.camera),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _imageSourceButton(
+                colors,
+                icon: Icons.photo_library_outlined,
+                label: 'Galería',
+                onTap: () => _pickImage(ImageSource.gallery),
+              ),
+            ),
+          ],
+        ),
+        if (_pickedImage != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: GestureDetector(
+              onTap: () => setState(() => _pickedImage = null),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.close, size: 14, color: colors.secondary),
+                  const SizedBox(width: 4),
+                  Text('Quitar foto seleccionada',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: colors.secondary)),
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _imagePlaceholder(NeumorphicColors colors, {bool error = false}) {
+    return Container(
+      height: 150,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: (error ? colors.secondary : colors.primary).withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: (error ? colors.secondary : colors.primary).withValues(alpha: 0.15)),
+      ),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              error ? Icons.broken_image_outlined : Icons.image_outlined,
+              color: (error ? colors.secondary : colors.text).withValues(alpha: error ? 0.5 : 0.2),
+              size: 28,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              error ? 'No se pudo cargar la imagen' : 'Sin imagen',
+              style: TextStyle(fontSize: 11, color: (error ? colors.secondary : colors.text).withValues(alpha: error ? 0.6 : 0.25)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _imageSourceButton(
+    NeumorphicColors colors, {
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: NeumorphicStyle.elevated(colors, radius: 12),
+        child: Column(
+          children: [
+            Icon(icon, size: 20, color: colors.primary),
+            const SizedBox(height: 4),
+            Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: colors.text)),
+          ],
+        ),
       ),
     );
   }

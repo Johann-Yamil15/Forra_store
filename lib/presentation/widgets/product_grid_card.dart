@@ -1,4 +1,5 @@
 ﻿import 'package:flutter/material.dart';
+import '../../core/constants/api_constants.dart';
 import '../../core/theme/neumorphic_colors.dart';
 import '../../core/utils/neumorphic_style.dart';
 import '../../data/models/producto_preview.dart';
@@ -113,7 +114,7 @@ class ProductGridCard extends StatelessWidget {
   Widget _buildImage() {
     if (producto.imagenUrl.isNotEmpty) {
       return Image.network(
-        producto.imagenUrl,
+        ApiConstants.resolveImageUrl(producto.imagenUrl),
         fit: BoxFit.cover,
         width: double.infinity,
         height: double.infinity,

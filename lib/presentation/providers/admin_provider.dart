@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:forra_store/data/services/admin_service.dart';
@@ -274,8 +275,8 @@ class AdminProvider extends ChangeNotifier {
 
   // ── CRUD Productos ────────────────────────────────────────────────
 
-  Future<void> addProducto(ProductoAdmin p) async {
-    await AdminService.createProducto({
+  Future<int> addProducto(ProductoAdmin p) async {
+    final id = await AdminService.createProducto({
       'nombre': p.nombre,
       'descripcion': p.descripcion,
       'categoria': p.categoria,
@@ -285,6 +286,16 @@ class AdminProvider extends ChangeNotifier {
       'presentaciones': p.presentaciones.map((pr) => pr.toJson()).toList(),
     });
     await init();
+    return id;
+  }
+
+  Future<void> subirImagenProducto(int idProducto, File imagen) async {
+    final imagenUrl = await AdminService.subirImagenProducto(idProducto, imagen);
+    final idx = _productos.indexWhere((p) => p.id == idProducto);
+    if (idx >= 0) {
+      _productos[idx].imagenUrl = imagenUrl;
+      notifyListeners();
+    }
   }
 
   Future<void> updateProducto(int id, {
