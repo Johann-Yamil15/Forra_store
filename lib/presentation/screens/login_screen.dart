@@ -42,10 +42,12 @@ class _LoginScreenState extends State<LoginScreen>
     _slideAnim = Tween<Offset>(
       begin: const Offset(0, 0.1),
       end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _animController,
-      curve: const Interval(0.1, 1.0, curve: Curves.easeOutCubic),
-    ));
+    ).animate(
+      CurvedAnimation(
+        parent: _animController,
+        curve: const Interval(0.1, 1.0, curve: Curves.easeOutCubic),
+      ),
+    );
     _animController.forward();
   }
 
@@ -64,6 +66,10 @@ class _LoginScreenState extends State<LoginScreen>
 
     return Scaffold(
       backgroundColor: colors.primary,
+      // Con el teclado abierto, la marca de arriba se encoge en vez de
+      // desbordar (FittedBox) y el Scaffold sigue redimensionándose
+      // (comportamiento por defecto) para que el campo enfocado quede
+      // visible arriba del teclado.
       body: Column(
         children: [
           // ── BRAND ──────────────────────────────────
@@ -71,48 +77,51 @@ class _LoginScreenState extends State<LoginScreen>
             flex: 4,
             child: SafeArea(
               bottom: false,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(22),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.18),
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.12),
-                          blurRadius: 24,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(22),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.18),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.12),
+                            blurRadius: 24,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.agriculture,
+                        size: 54,
+                        color: Colors.white,
+                      ),
                     ),
-                    child: const Icon(
-                      Icons.agriculture,
-                      size: 54,
-                      color: Colors.white,
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Forra Store',
+                      style: TextStyle(
+                        fontSize: 36,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                        letterSpacing: -1.0,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'Forra Store',
-                    style: TextStyle(
-                      fontSize: 36,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.white,
-                      letterSpacing: -1.0,
+                    const SizedBox(height: 8),
+                    Text(
+                      'Gestión agrícola y ganadera',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.white.withValues(alpha: 0.7),
+                        letterSpacing: 0.6,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Gestión agrícola y ganadera',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.white.withValues(alpha: 0.7),
-                      letterSpacing: 0.6,
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -193,8 +202,8 @@ class _LoginScreenState extends State<LoginScreen>
                                 color: colors.text.withValues(alpha: 0.4),
                                 size: 20,
                               ),
-                              onPressed: () =>
-                                  setState(() => _obscure = !_obscure),
+                              onPressed:
+                                  () => setState(() => _obscure = !_obscure),
                             ),
                           ),
 
@@ -202,12 +211,11 @@ class _LoginScreenState extends State<LoginScreen>
 
                           // Botón principal
                           GestureDetector(
-                            onTapDown: (_) =>
-                                setState(() => _btnPressed = true),
-                            onTapUp: (_) =>
-                                setState(() => _btnPressed = false),
-                            onTapCancel: () =>
-                                setState(() => _btnPressed = false),
+                            onTapDown:
+                                (_) => setState(() => _btnPressed = true),
+                            onTapUp: (_) => setState(() => _btnPressed = false),
+                            onTapCancel:
+                                () => setState(() => _btnPressed = false),
                             onTap: _isLoading ? null : _login,
                             child: AnimatedScale(
                               scale: _btnPressed ? 0.97 : 1.0,
@@ -215,68 +223,62 @@ class _LoginScreenState extends State<LoginScreen>
                               child: AnimatedContainer(
                                 duration: const Duration(milliseconds: 150),
                                 width: double.infinity,
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 18),
-                                decoration: BoxDecoration(
-                                  color: _btnPressed
-                                      ? colors.primary.withValues(alpha: 0.85)
-                                      : colors.primary,
-                                  borderRadius: BorderRadius.circular(18),
-                                  boxShadow: _btnPressed
-                                      ? []
-                                      : [
-                                          BoxShadow(
-                                            color: colors.primary
-                                                .withValues(alpha: 0.45),
-                                            blurRadius: 18,
-                                            offset: const Offset(0, 7),
-                                          ),
-                                        ],
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 18,
                                 ),
-                                child: Center(
-                                  child: _isLoading
-                                      ? const SizedBox(
-                                          width: 22,
-                                          height: 22,
-                                          child: CircularProgressIndicator(
-                                            color: Colors.white,
-                                            strokeWidth: 2.5,
-                                          ),
-                                        )
-                                      : const Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Text(
-                                              'INGRESAR',
-                                              style: TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.w800,
-                                                letterSpacing: 1.2,
+                                decoration: BoxDecoration(
+                                  color:
+                                      _btnPressed
+                                          ? colors.primary.withValues(
+                                            alpha: 0.85,
+                                          )
+                                          : colors.primary,
+                                  borderRadius: BorderRadius.circular(18),
+                                  boxShadow:
+                                      _btnPressed
+                                          ? []
+                                          : [
+                                            BoxShadow(
+                                              color: colors.primary.withValues(
+                                                alpha: 0.45,
                                               ),
-                                            ),
-                                            SizedBox(width: 10),
-                                            Icon(
-                                              Icons.arrow_forward_rounded,
-                                              color: Colors.white,
-                                              size: 20,
+                                              blurRadius: 18,
+                                              offset: const Offset(0, 7),
                                             ),
                                           ],
-                                        ),
                                 ),
-                              ),
-                            ),
-                          ),
-
-                          const SizedBox(height: 28),
-                          Center(
-                            child: Text(
-                              'Trabajador: usuario  •  Admin: admin\nContraseña: 123456789',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: colors.text.withValues(alpha: 0.22),
-                                height: 1.7,
+                                child: Center(
+                                  child:
+                                      _isLoading
+                                          ? const SizedBox(
+                                            width: 22,
+                                            height: 22,
+                                            child: CircularProgressIndicator(
+                                              color: Colors.white,
+                                              strokeWidth: 2.5,
+                                            ),
+                                          )
+                                          : const Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(
+                                                'INGRESAR',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.w800,
+                                                  letterSpacing: 1.2,
+                                                ),
+                                              ),
+                                              SizedBox(width: 10),
+                                              Icon(
+                                                Icons.arrow_forward_rounded,
+                                                color: Colors.white,
+                                                size: 20,
+                                              ),
+                                            ],
+                                          ),
+                                ),
                               ),
                             ),
                           ),
@@ -294,14 +296,14 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Widget _label(String text, NeumorphicColors colors) => Text(
-        text,
-        style: TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w700,
-          color: colors.text.withValues(alpha: 0.55),
-          letterSpacing: 0.5,
-        ),
-      );
+    text,
+    style: TextStyle(
+      fontSize: 13,
+      fontWeight: FontWeight.w700,
+      color: colors.text.withValues(alpha: 0.55),
+      letterSpacing: 0.5,
+    ),
+  );
 
   Widget _field({
     required TextEditingController controller,
@@ -323,11 +325,9 @@ class _LoginScreenState extends State<LoginScreen>
         decoration: InputDecoration(
           border: InputBorder.none,
           hintText: hint,
-          hintStyle:
-              TextStyle(color: colors.text.withValues(alpha: 0.3)),
-          icon: icon != null
-              ? Icon(icon, color: colors.primary, size: 20)
-              : null,
+          hintStyle: TextStyle(color: colors.text.withValues(alpha: 0.3)),
+          icon:
+              icon != null ? Icon(icon, color: colors.primary, size: 20) : null,
           suffixIcon: suffix,
           contentPadding: const EdgeInsets.symmetric(vertical: 14),
         ),
@@ -342,20 +342,20 @@ class _LoginScreenState extends State<LoginScreen>
 
     try {
       final auth = Provider.of<AuthProvider>(context, listen: false);
-      await auth.loginWithApi(
-        _userCtrl.text.trim(),
-        _passCtrl.text.trim(),
-      );
+      await auth.loginWithApi(_userCtrl.text.trim(), _passCtrl.text.trim());
 
       if (!mounted) return;
       Navigator.pushReplacement(
         context,
         PageRouteBuilder(
-          pageBuilder: (_, __, ___) => auth.role == 'admin'
-              ? const MainScreenAdmin()
-              : const MainScreenTrabajador(),
-          transitionsBuilder: (_, anim, __, child) =>
-              FadeTransition(opacity: anim, child: child),
+          pageBuilder:
+              (_, __, ___) =>
+                  auth.role == 'admin'
+                      ? const MainScreenAdmin()
+                      : const MainScreenTrabajador(),
+          transitionsBuilder:
+              (_, anim, __, child) =>
+                  FadeTransition(opacity: anim, child: child),
           transitionDuration: const Duration(milliseconds: 400),
         ),
       );
@@ -366,8 +366,9 @@ class _LoginScreenState extends State<LoginScreen>
           content: Text(e.toString()),
           backgroundColor: Colors.red.shade600,
           behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       );
     } finally {

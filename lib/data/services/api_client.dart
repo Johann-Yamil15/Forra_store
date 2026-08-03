@@ -24,6 +24,15 @@ class ApiClient {
   // Parsea el sobre { ok, data } y extrae data (o lanza excepción)
   static dynamic _parse(http.Response res) {
     if (res.statusCode == 204) return null;
+    if (res.bodyBytes.isEmpty) {
+      // Respuesta vacía (proxy caído, servidor dormido despertando, timeout
+      // de borde, etc.) — evita el FormatException críptico de jsonDecode('').
+      if (res.statusCode >= 200 && res.statusCode < 300) return null;
+      throw ApiException(
+        'El servidor no respondió (código ${res.statusCode}). Puede estar despertando tras estar inactivo — intenta de nuevo en unos segundos.',
+        statusCode: res.statusCode,
+      );
+    }
     final body = jsonDecode(utf8.decode(res.bodyBytes));
     if (res.statusCode >= 200 && res.statusCode < 300) {
       if (body is Map && body.containsKey('ok')) {

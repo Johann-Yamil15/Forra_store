@@ -864,10 +864,28 @@ class _ProductosAdminList extends StatelessWidget {
                         color: c,
                       ),
                       const SizedBox(width: 8),
-                      Expanded(child: Text(pr.descripcion, style: TextStyle(fontSize: 12, color: colors.text.withValues(alpha: 0.65)))),
-                      Text('\$${pr.precio.toStringAsFixed(2)}', style: TextStyle(fontSize: 12, color: colors.text.withValues(alpha: 0.5))),
-                      const SizedBox(width: 12),
-                      Text('${pr.stock} uds.', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: c)),
+                      Expanded(
+                        child: Text(
+                          pr.descripcion,
+                          style: TextStyle(fontSize: 12, color: colors.text.withValues(alpha: 0.65)),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerRight,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text('\$${pr.precio.toStringAsFixed(2)}', style: TextStyle(fontSize: 12, color: colors.text.withValues(alpha: 0.5))),
+                              const SizedBox(width: 12),
+                              Text('${pr.stock} uds.', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: c)),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 );
@@ -991,11 +1009,23 @@ class _ClientesAdminList extends StatelessWidget {
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
-                                  Text('\$${pr.precioLista.toStringAsFixed(2)}',
-                                      style: TextStyle(fontSize: 11, color: colors.text.withValues(alpha: 0.35), decoration: TextDecoration.lineThrough)),
-                                  const SizedBox(width: 6),
-                                  Text('\$${pr.precioEspecial.toStringAsFixed(2)}',
-                                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.primary)),
+                                  const SizedBox(width: 8),
+                                  Flexible(
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      alignment: Alignment.centerRight,
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text('\$${pr.precioLista.toStringAsFixed(2)}',
+                                              style: TextStyle(fontSize: 11, color: colors.text.withValues(alpha: 0.35), decoration: TextDecoration.lineThrough)),
+                                          const SizedBox(width: 6),
+                                          Text('\$${pr.precioEspecial.toStringAsFixed(2)}',
+                                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.primary)),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
                                 ],
                               ),
                             )),
