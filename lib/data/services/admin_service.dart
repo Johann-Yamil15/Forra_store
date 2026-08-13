@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:forra_store/data/services/api_client.dart';
 
 // DTOs planos — AdminProvider los convierte a sus propios modelos
@@ -87,5 +88,9 @@ class AdminService {
 
   static Future<Map<String, dynamic>> getReportes(String periodo) async {
     return (await ApiClient.get('/api/admin/reportes?periodo=$periodo')) as Map<String, dynamic>;
+  }
+
+  static Future<Uint8List> getReportePdf(String periodo) async {
+    return ApiClient.getBytes('/api/admin/reportes/pdf?periodo=$periodo');
   }
 }

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:forra_store/core/constants/api_constants.dart';
 
@@ -78,5 +79,15 @@ class ApiClient {
     final streamed = await _client.send(request).timeout(ApiConstants.timeout);
     final res = await http.Response.fromStream(streamed);
     return _parse(res);
+  }
+
+  // Descarga un binario (ej. PDF de reportes) — no pasa por el sobre {ok,data}
+  // porque la respuesta no es JSON.
+  static Future<Uint8List> getBytes(String path) async {
+    final res = await _client.get(_uri(path)).timeout(ApiConstants.timeout);
+    if (res.statusCode < 200 || res.statusCode >= 300) {
+      throw ApiException('No se pudo generar el reporte (código ${res.statusCode}).', statusCode: res.statusCode);
+    }
+    return res.bodyBytes;
   }
 }

@@ -13,7 +13,9 @@ import 'package:forra_store/presentation/screens/home/cart_screen.dart';
 import 'package:forra_store/presentation/screens/home/productos_screen.dart';
 import 'package:forra_store/presentation/screens/profile/profile_screen.dart';
 import 'package:forra_store/presentation/widgets/brand_mark.dart';
+import 'package:forra_store/data/services/admin_service.dart';
 import 'package:intl/intl.dart';
+import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 
 // ════════════════════════════════════════════════════════════════
@@ -530,7 +532,29 @@ class _ReportesAdminScreen extends StatefulWidget {
 
 class _ReportesAdminScreenState extends State<_ReportesAdminScreen> {
   int _periodo = 1;
+  bool _generandoPdf = false;
   static const _labels = ['Hoy', 'Semana', 'Mes'];
+  static const _periodoApi = ['hoy', 'semana', 'mes'];
+
+  Future<void> _compartirPdf() async {
+    if (_generandoPdf) return;
+    setState(() => _generandoPdf = true);
+    try {
+      final bytes = await AdminService.getReportePdf(_periodoApi[_periodo]);
+      await Printing.layoutPdf(
+        onLayout: (_) async => bytes,
+        name: 'reporte_forrastore_${_periodoApi[_periodo]}.pdf',
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No se pudo generar el PDF: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _generandoPdf = false);
+    }
+  }
 
   bool _isInPeriod(DateTime fecha) {
     final now = DateTime.now();
@@ -601,6 +625,30 @@ class _ReportesAdminScreenState extends State<_ReportesAdminScreen> {
                   ),
                 );
               }),
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _generandoPdf ? null : _compartirPdf,
+              icon: _generandoPdf
+                  ? SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: colors.primary),
+                    )
+                  : Icon(Icons.picture_as_pdf_outlined, color: colors.primary),
+              label: Text(
+                _generandoPdf ? 'Generando...' : 'Imprimir / Compartir PDF',
+                style: TextStyle(color: colors.primary, fontWeight: FontWeight.w600),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: colors.primary.withValues(alpha: 0.4)),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
             ),
           ),
           const SizedBox(height: 24),
