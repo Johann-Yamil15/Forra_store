@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:forra_store/presentation/screens/profile/profile_screen.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
@@ -11,7 +12,6 @@ import 'core/utils/auth_provider.dart';
 import 'presentation/screens/splash_screen.dart';
 import 'presentation/screens/login_screen.dart';
 import 'presentation/providers/cart_provider.dart';
-import 'presentation/providers/pedidos_provider.dart';
 import 'presentation/providers/admin_provider.dart';
 
 // Permite conexión a IIS Express con certificado auto-firmado en debug
@@ -33,7 +33,6 @@ void main() async {
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => CartProvider()),
-        ChangeNotifierProvider(create: (_) => PedidosProvider()),
         ChangeNotifierProvider(create: (_) => AdminProvider()),
       ],
       child: const ForraStoreApp(),
@@ -53,6 +52,13 @@ class ForraStoreApp extends StatelessWidget {
       theme: lightTheme,
       darkTheme: darkTheme,
       themeMode: themeProvider.mode,
+      locale: const Locale('es', 'MX'),
+      supportedLocales: const [Locale('es', 'MX'), Locale('en')],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       home: const SplashScreen(),
       routes: {
         '/login': (_) => const LoginScreen(),

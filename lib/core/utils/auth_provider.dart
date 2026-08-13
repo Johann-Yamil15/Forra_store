@@ -55,7 +55,13 @@ class AuthProvider with ChangeNotifier {
 
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+    // Solo las claves de sesión: prefs.clear() borraba TODO el almacenamiento
+    // local (carrito, listas del admin, tema), no solo la sesión.
+    await prefs.remove('session_token');
+    await prefs.remove('session_expiry');
+    await prefs.remove('session_username');
+    await prefs.remove('session_role');
+    await prefs.remove('session_id_usuario');
 
     _isLoggedIn = false;
     _expiryDate = null;

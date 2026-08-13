@@ -86,11 +86,16 @@ class AdminService {
     return (await ApiClient.get('/api/admin/dashboard')) as Map<String, dynamic>;
   }
 
-  static Future<Map<String, dynamic>> getReportes(String periodo) async {
-    return (await ApiClient.get('/api/admin/reportes?periodo=$periodo')) as Map<String, dynamic>;
+  static String _fmtFecha(DateTime d) =>
+      '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+  static Future<Map<String, dynamic>> getReportes(DateTime desde, DateTime hasta) async {
+    final q = 'desde=${_fmtFecha(desde)}&hasta=${_fmtFecha(hasta)}';
+    return (await ApiClient.get('/api/admin/reportes?$q')) as Map<String, dynamic>;
   }
 
-  static Future<Uint8List> getReportePdf(String periodo) async {
-    return ApiClient.getBytes('/api/admin/reportes/pdf?periodo=$periodo');
+  static Future<Uint8List> getReportePdf(DateTime desde, DateTime hasta) async {
+    final q = 'desde=${_fmtFecha(desde)}&hasta=${_fmtFecha(hasta)}';
+    return ApiClient.getBytes('/api/admin/reportes/pdf?$q');
   }
 }

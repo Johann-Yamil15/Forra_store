@@ -3,10 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:forra_store/core/theme/neumorphic_colors.dart';
 import 'package:forra_store/core/utils/neumorphic_style.dart';
-import 'package:forra_store/data/models/pedido.dart';
 import 'package:forra_store/presentation/providers/admin_provider.dart';
 import 'package:forra_store/presentation/providers/cart_provider.dart';
-import 'package:forra_store/presentation/providers/pedidos_provider.dart';
 import 'package:forra_store/presentation/screens/admin/cliente_admin_screen.dart';
 import 'package:forra_store/presentation/screens/admin/producto_admin_screen.dart';
 import 'package:forra_store/presentation/screens/home/cart_screen.dart';
@@ -280,55 +278,107 @@ class _NavItem {
 //  TAB 1 — DASHBOARD
 // ════════════════════════════════════════════════════════════════
 
-class _DashboardAdminScreen extends StatelessWidget {
+class _DashboardAdminScreen extends StatefulWidget {
   const _DashboardAdminScreen();
+  @override
+  State<_DashboardAdminScreen> createState() => _DashboardAdminScreenState();
+}
 
-  bool _isToday(DateTime d) {
-    final now = DateTime.now();
-    return d.year == now.year && d.month == now.month && d.day == now.day;
+class _DashboardAdminScreenState extends State<_DashboardAdminScreen> {
+  bool _loading = true;
+  String? _error;
+  Map<String, dynamic>? _dashboard;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargar();
   }
 
-  bool _isThisWeek(DateTime d) => DateTime.now().difference(d).inDays < 7;
+  Future<void> _cargar() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final data = await AdminService.getDashboard();
+      if (mounted) setState(() { _dashboard = data; _loading = false; });
+    } catch (e) {
+      if (mounted) setState(() { _error = 'No se pudo cargar el dashboard: $e'; _loading = false; });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colors = isDark ? NeumorphicColors.dark : NeumorphicColors.light;
-    final pedidos = context.watch<PedidosProvider>().pedidos;
     final productos = context.watch<AdminProvider>().productos;
+    final alertasProductos = productos.where((p) => p.tieneAlerta).toList();
 
-    final hoy = pedidos.where((p) => _isToday(p.fecha)).toList();
-    final semana = pedidos.where((p) => _isThisWeek(p.fecha)).toList();
-    final totalHoy = hoy.fold(0.0, (s, p) => s + p.totalFinal);
-    final totalSemana = semana.fold(0.0, (s, p) => s + p.totalFinal);
-    final alertas = productos.where((p) => p.tieneAlerta).toList();
+    final ventasHoy = (_dashboard?['ventasHoy'] as num?)?.toInt() ?? 0;
+    final totalHoy = (_dashboard?['totalHoy'] as num?)?.toDouble() ?? 0;
+    final totalSemana = (_dashboard?['totalSemana'] as num?)?.toDouble() ?? 0;
+    final topProductos = (_dashboard?['topProductos'] as List?)?.cast<Map<String, dynamic>>() ?? const [];
+    final ventasRecientes = (_dashboard?['ventasRecientes'] as List?)?.cast<Map<String, dynamic>>() ?? const [];
 
     return Scaffold(
       backgroundColor: colors.background,
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
-        children: [
-          _buildGreeting(colors),
-          const SizedBox(height: 24),
-          _buildKpiRow(colors, hoy.length, totalHoy, totalSemana),
-          const SizedBox(height: 28),
-          if (alertas.isNotEmpty) ...[
-            _sectionTitle('Alertas de Stock', Icons.warning_amber_rounded, colors, color: colors.secondary),
-            const SizedBox(height: 12),
-            ...alertas.map((p) => _StockAlertTile(producto: p, colors: colors)),
-            const SizedBox(height: 28),
-          ],
-          _sectionTitle('Más vendidos', Icons.trending_up, colors),
-          const SizedBox(height: 12),
-          _buildTopProductos(colors, pedidos),
-          const SizedBox(height: 28),
-          _sectionTitle('Ventas recientes', Icons.receipt_long_outlined, colors),
-          const SizedBox(height: 12),
-          if (pedidos.isEmpty)
-            _emptyHint('Sin ventas registradas aún', colors)
-          else
-            ...pedidos.take(4).map((p) => _RecentSaleTile(pedido: p, colors: colors)),
-        ],
+      body: RefreshIndicator(
+        onRefresh: _cargar,
+        child: _loading
+            ? ListView(
+                children: const [
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: 100),
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                ],
+              )
+            : _error != null
+                ? ListView(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 80),
+                        child: Column(
+                          children: [
+                            Icon(Icons.cloud_off_outlined, color: colors.text.withValues(alpha: 0.3), size: 32),
+                            const SizedBox(height: 8),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 24),
+                              child: Text(_error!, textAlign: TextAlign.center, style: TextStyle(color: colors.text.withValues(alpha: 0.5), fontSize: 12)),
+                            ),
+                            const SizedBox(height: 12),
+                            TextButton(onPressed: _cargar, child: const Text('Reintentar')),
+                          ],
+                        ),
+                      ),
+                    ],
+                  )
+                : ListView(
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
+                    children: [
+                      _buildGreeting(colors),
+                      const SizedBox(height: 24),
+                      _buildKpiRow(colors, ventasHoy, totalHoy, totalSemana),
+                      const SizedBox(height: 28),
+                      if (alertasProductos.isNotEmpty) ...[
+                        _sectionTitle('Alertas de Stock', Icons.warning_amber_rounded, colors, color: colors.secondary),
+                        const SizedBox(height: 12),
+                        ...alertasProductos.map((p) => _StockAlertTile(producto: p, colors: colors)),
+                        const SizedBox(height: 28),
+                      ],
+                      _sectionTitle('Más vendidos', Icons.trending_up, colors),
+                      const SizedBox(height: 12),
+                      _buildTopProductos(colors, topProductos),
+                      const SizedBox(height: 28),
+                      _sectionTitle('Ventas recientes', Icons.receipt_long_outlined, colors),
+                      const SizedBox(height: 12),
+                      if (ventasRecientes.isEmpty)
+                        _emptyHint('Sin ventas registradas aún', colors)
+                      else
+                        ...ventasRecientes.map((v) => _VentaResumenTile(venta: v, colors: colors)),
+                    ],
+                  ),
       ),
     );
   }
@@ -371,25 +421,19 @@ class _DashboardAdminScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTopProductos(NeumorphicColors colors, List<Pedido> pedidos) {
-    final Map<String, int> conteo = {};
-    for (final p in pedidos) {
-      for (final item in p.items) {
-        conteo[item.nombreProducto] = (conteo[item.nombreProducto] ?? 0) + item.cantidad;
-      }
-    }
-    if (conteo.isEmpty) return _emptyHint('Sin datos de ventas aún', colors);
+  Widget _buildTopProductos(NeumorphicColors colors, List<Map<String, dynamic>> topProductos) {
+    if (topProductos.isEmpty) return _emptyHint('Sin datos de ventas aún', colors);
 
-    final sorted = conteo.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
-    final top = sorted.take(3).toList();
-    final maxVal = top.first.value;
+    final top = topProductos.take(3).toList();
+    final maxVal = (top.first['totalVendido'] as num).toInt();
 
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: NeumorphicStyle.elevated(colors, radius: 16),
       child: Column(
         children: List.generate(top.length, (i) {
-          final entry = top[i];
+          final nombre = top[i]['nombreProducto'] as String;
+          final valor = (top[i]['totalVendido'] as num).toInt();
           return Padding(
             padding: EdgeInsets.only(bottom: i < top.length - 1 ? 16 : 0),
             child: Column(
@@ -406,15 +450,15 @@ class _DashboardAdminScreen extends StatelessWidget {
                       child: Center(child: Text('${i + 1}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white))),
                     ),
                     const SizedBox(width: 10),
-                    Expanded(child: Text(entry.key, style: TextStyle(fontWeight: FontWeight.w600, color: colors.text, fontSize: 13), overflow: TextOverflow.ellipsis)),
-                    Text('${entry.value} uds.', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.primary)),
+                    Expanded(child: Text(nombre, style: TextStyle(fontWeight: FontWeight.w600, color: colors.text, fontSize: 13), overflow: TextOverflow.ellipsis)),
+                    Text('$valor uds.', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.primary)),
                   ],
                 ),
                 const SizedBox(height: 8),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(4),
                   child: LinearProgressIndicator(
-                    value: entry.value / maxVal,
+                    value: maxVal > 0 ? valor / maxVal : 0,
                     minHeight: 5,
                     backgroundColor: colors.primary.withValues(alpha: 0.1),
                     valueColor: AlwaysStoppedAnimation<Color>(colors.primary.withValues(alpha: 0.7 - i * 0.15)),
@@ -531,20 +575,79 @@ class _ReportesAdminScreen extends StatefulWidget {
 }
 
 class _ReportesAdminScreenState extends State<_ReportesAdminScreen> {
+  // -1 = rango personalizado elegido con el calendario.
   int _periodo = 1;
   bool _generandoPdf = false;
+  bool _loading = true;
+  String? _error;
+  Map<String, dynamic>? _reporte;
+
+  late DateTime _desde;
+  late DateTime _hasta;
+
   static const _labels = ['Hoy', 'Semana', 'Mes'];
-  static const _periodoApi = ['hoy', 'semana', 'mes'];
+
+  @override
+  void initState() {
+    super.initState();
+    _seleccionarPeriodo(1);
+  }
+
+  void _seleccionarPeriodo(int i) {
+    final hoy = DateTime.now();
+    final hoyDate = DateTime(hoy.year, hoy.month, hoy.day);
+    setState(() {
+      _periodo = i;
+      switch (i) {
+        case 0:
+          _desde = hoyDate;
+          _hasta = hoyDate;
+        case 1:
+          _desde = hoyDate.subtract(const Duration(days: 6));
+          _hasta = hoyDate;
+        case 2:
+          _desde = DateTime(hoy.year, hoy.month, 1);
+          _hasta = hoyDate;
+      }
+    });
+    _cargarReporte();
+  }
+
+  Future<void> _elegirRangoPersonalizado() async {
+    final rango = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+      initialDateRange: DateTimeRange(start: _desde, end: _hasta),
+    );
+    if (rango == null) return;
+    setState(() {
+      _periodo = -1;
+      _desde = DateTime(rango.start.year, rango.start.month, rango.start.day);
+      _hasta = DateTime(rango.end.year, rango.end.month, rango.end.day);
+    });
+    _cargarReporte();
+  }
+
+  Future<void> _cargarReporte() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final data = await AdminService.getReportes(_desde, _hasta);
+      if (mounted) setState(() { _reporte = data; _loading = false; });
+    } catch (e) {
+      if (mounted) setState(() { _error = 'No se pudo cargar el reporte: $e'; _loading = false; });
+    }
+  }
 
   Future<void> _compartirPdf() async {
     if (_generandoPdf) return;
     setState(() => _generandoPdf = true);
     try {
-      final bytes = await AdminService.getReportePdf(_periodoApi[_periodo]);
-      await Printing.layoutPdf(
-        onLayout: (_) async => bytes,
-        name: 'reporte_forrastore_${_periodoApi[_periodo]}.pdf',
-      );
+      final bytes = await AdminService.getReportePdf(_desde, _hasta);
+      await Printing.layoutPdf(onLayout: (_) async => bytes, name: 'reporte_forrastore.pdf');
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -556,189 +659,264 @@ class _ReportesAdminScreenState extends State<_ReportesAdminScreen> {
     }
   }
 
-  bool _isInPeriod(DateTime fecha) {
-    final now = DateTime.now();
-    if (_periodo == 0) return fecha.year == now.year && fecha.month == now.month && fecha.day == now.day;
-    if (_periodo == 1) return now.difference(fecha).inDays < 7;
-    return fecha.year == now.year && fecha.month == now.month;
-  }
-
-  Map<String, double> _agrupar(List<Pedido> pedidos) {
-    final Map<String, double> result = {};
-    final now = DateTime.now();
-    final days = _periodo == 0 ? 1 : _periodo == 1 ? 7 : 30;
-    for (int i = days - 1; i >= 0; i--) {
-      final day = now.subtract(Duration(days: i));
-      final key = _periodo == 2 ? DateFormat('d/MM').format(day) : DateFormat('E', 'es_MX').format(day);
-      result[key] = 0;
-    }
-    for (final p in pedidos.where((p) => _isInPeriod(p.fecha))) {
-      final key = _periodo == 2 ? DateFormat('d/MM').format(p.fecha) : DateFormat('E', 'es_MX').format(p.fecha);
-      if (result.containsKey(key)) result[key] = (result[key] ?? 0) + p.totalFinal;
-    }
-    return result;
+  String get _labelRango {
+    if (_periodo >= 0) return _labels[_periodo];
+    final fmt = DateFormat('d/MM/yy');
+    return _desde == _hasta ? fmt.format(_desde) : '${fmt.format(_desde)} – ${fmt.format(_hasta)}';
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colors = isDark ? NeumorphicColors.dark : NeumorphicColors.light;
-    final pedidos = context.watch<PedidosProvider>().pedidos;
-    final enPeriodo = pedidos.where((p) => _isInPeriod(p.fecha)).toList();
-    final total = enPeriodo.fold(0.0, (s, p) => s + p.totalFinal);
-    final descuento = enPeriodo.fold(0.0, (s, p) => s + p.descuento);
-    final datosBarra = _agrupar(pedidos);
-    final maxBarra = datosBarra.values.fold(0.0, math.max);
+
+    final total = (_reporte?['totalVentas'] as num?)?.toDouble() ?? 0;
+    final descuento = (_reporte?['descuentoTotal'] as num?)?.toDouble() ?? 0;
+    final numVentas = (_reporte?['numVentas'] as num?)?.toInt() ?? 0;
+    final desglose = (_reporte?['desgloseDiario'] as List?)?.cast<Map<String, dynamic>>() ?? const [];
+    final ventas = (_reporte?['ventas'] as List?)?.cast<Map<String, dynamic>>() ?? const [];
+    final maxBarra = desglose.fold(0.0, (m, e) => math.max(m, (e['total'] as num).toDouble()));
 
     return Scaffold(
       backgroundColor: colors.background,
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
-        children: [
-          // Selector período
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: NeumorphicStyle.inset(colors, radius: 20),
-            child: Row(
-              children: List.generate(_labels.length, (i) {
-                final sel = _periodo == i;
-                return Expanded(
-                  child: GestureDetector(
-                    onTap: () => setState(() => _periodo = i),
+      body: RefreshIndicator(
+        onRefresh: _cargarReporte,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
+          children: [
+            // Selector período
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: NeumorphicStyle.inset(colors, radius: 20),
+              child: Row(
+                children: [
+                  ...List.generate(_labels.length, (i) {
+                    final sel = _periodo == i;
+                    return Expanded(
+                      child: GestureDetector(
+                        onTap: () => _seleccionarPeriodo(i),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 250),
+                          curve: Curves.easeInOut,
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          decoration: sel
+                              ? BoxDecoration(
+                                  color: colors.primary,
+                                  borderRadius: BorderRadius.circular(14),
+                                  boxShadow: [BoxShadow(color: colors.primary.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 3))],
+                                )
+                              : const BoxDecoration(),
+                          child: Text(
+                            _labels[i],
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: sel ? Colors.white : colors.text.withValues(alpha: 0.4)),
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                  GestureDetector(
+                    onTap: _elegirRangoPersonalizado,
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 250),
                       curve: Curves.easeInOut,
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      decoration: sel
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      decoration: _periodo == -1
                           ? BoxDecoration(
                               color: colors.primary,
                               borderRadius: BorderRadius.circular(14),
                               boxShadow: [BoxShadow(color: colors.primary.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 3))],
                             )
                           : const BoxDecoration(),
-                      child: Text(
-                        _labels[i],
-                        textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: sel ? Colors.white : colors.text.withValues(alpha: 0.4)),
-                      ),
+                      child: Icon(Icons.calendar_month_outlined, size: 18, color: _periodo == -1 ? Colors.white : colors.text.withValues(alpha: 0.4)),
                     ),
                   ),
-                );
-              }),
-            ),
-          ),
-          const SizedBox(height: 14),
-
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: _generandoPdf ? null : _compartirPdf,
-              icon: _generandoPdf
-                  ? SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: colors.primary),
-                    )
-                  : Icon(Icons.picture_as_pdf_outlined, color: colors.primary),
-              label: Text(
-                _generandoPdf ? 'Generando...' : 'Imprimir / Compartir PDF',
-                style: TextStyle(color: colors.primary, fontWeight: FontWeight.w600),
-              ),
-              style: OutlinedButton.styleFrom(
-                side: BorderSide(color: colors.primary.withValues(alpha: 0.4)),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ],
               ),
             ),
-          ),
-          const SizedBox(height: 24),
+            if (_periodo == -1) ...[
+              const SizedBox(height: 8),
+              Text(_labelRango, textAlign: TextAlign.center, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: colors.primary)),
+            ],
+            const SizedBox(height: 14),
 
-          // Hero total
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: colors.primary,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [BoxShadow(color: colors.primary.withValues(alpha: 0.35), blurRadius: 18, offset: const Offset(0, 8))],
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Total ${_labels[_periodo].toLowerCase()}', style: const TextStyle(fontSize: 12, color: Colors.white60)),
-                      const SizedBox(height: 6),
-                      Text('\$${total.toStringAsFixed(2)}', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
-                      if (descuento > 0)
-                        Text('Descuentos: \$${descuento.toStringAsFixed(2)}', style: const TextStyle(fontSize: 11, color: Colors.white54)),
-                    ],
-                  ),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: _generandoPdf ? null : _compartirPdf,
+                icon: _generandoPdf
+                    ? SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: colors.primary),
+                      )
+                    : Icon(Icons.picture_as_pdf_outlined, color: colors.primary),
+                label: Text(
+                  _generandoPdf ? 'Generando...' : 'Imprimir / Compartir PDF',
+                  style: TextStyle(color: colors.primary, fontWeight: FontWeight.w600),
                 ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: colors.primary.withValues(alpha: 0.4)),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            if (_loading)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 60),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (_error != null)
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: NeumorphicStyle.elevated(colors, radius: 16),
+                child: Column(
                   children: [
-                    Text('${enPeriodo.length}', style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.white)),
-                    const Text('ventas', style: TextStyle(fontSize: 12, color: Colors.white60)),
+                    Icon(Icons.cloud_off_outlined, color: colors.text.withValues(alpha: 0.3), size: 32),
+                    const SizedBox(height: 8),
+                    Text(_error!, textAlign: TextAlign.center, style: TextStyle(color: colors.text.withValues(alpha: 0.5), fontSize: 12)),
+                    const SizedBox(height: 12),
+                    TextButton(onPressed: _cargarReporte, child: const Text('Reintentar')),
                   ],
                 ),
+              )
+            else ...[
+              // Hero total
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: colors.primary,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [BoxShadow(color: colors.primary.withValues(alpha: 0.35), blurRadius: 18, offset: const Offset(0, 8))],
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Total ${_labelRango.toLowerCase()}', style: const TextStyle(fontSize: 12, color: Colors.white60)),
+                          const SizedBox(height: 6),
+                          Text('\$${total.toStringAsFixed(2)}', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
+                          if (descuento > 0)
+                            Text('Descuentos: \$${descuento.toStringAsFixed(2)}', style: const TextStyle(fontSize: 11, color: Colors.white54)),
+                        ],
+                      ),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text('$numVentas', style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.white)),
+                        const Text('ventas', style: TextStyle(fontSize: 12, color: Colors.white60)),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Gráfico
+              Text('Desglose', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colors.text)),
+              const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: NeumorphicStyle.elevated(colors, radius: 16),
+                child: Column(
+                  children: desglose.map((e) {
+                    final etiqueta = e['etiqueta'] as String;
+                    final valor = (e['total'] as num).toDouble();
+                    final pct = maxBarra > 0 ? valor / maxBarra : 0.0;
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Row(
+                        children: [
+                          SizedBox(width: 46, child: Text(etiqueta, style: TextStyle(fontSize: 11, color: colors.text.withValues(alpha: 0.5)))),
+                          Expanded(
+                            child: Stack(
+                              children: [
+                                Container(height: 20, decoration: BoxDecoration(color: colors.primary.withValues(alpha: 0.07), borderRadius: BorderRadius.circular(6))),
+                                FractionallySizedBox(
+                                  widthFactor: pct.clamp(0.0, 1.0),
+                                  child: Container(height: 20, decoration: BoxDecoration(color: colors.primary.withValues(alpha: valor > 0 ? 0.75 : 0), borderRadius: BorderRadius.circular(6))),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          SizedBox(
+                            width: 58,
+                            child: Text(
+                              valor > 0 ? '\$${valor.toStringAsFixed(0)}' : '—',
+                              textAlign: TextAlign.right,
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: valor > 0 ? colors.primary : colors.text.withValues(alpha: 0.3)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              Text('Detalle de ventas', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colors.text)),
+              const SizedBox(height: 12),
+              if (ventas.isEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 30),
+                  alignment: Alignment.center,
+                  child: Text('Sin ventas en este período', style: TextStyle(color: colors.text.withValues(alpha: 0.3), fontSize: 13)),
+                )
+              else
+                ...ventas.map((v) => _VentaResumenTile(venta: v, colors: colors)),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _VentaResumenTile extends StatelessWidget {
+  final Map<String, dynamic> venta;
+  final NeumorphicColors colors;
+  const _VentaResumenTile({required this.venta, required this.colors});
+
+  @override
+  Widget build(BuildContext context) {
+    final fecha = DateTime.parse(venta['fecha'] as String).toLocal();
+    final fmt = DateFormat('dd/MM • HH:mm');
+    final nombreCliente = venta['nombreCliente'] as String? ?? 'Venta al Público';
+    final numProductos = (venta['numProductos'] as num?)?.toInt() ?? 0;
+    final total = (venta['totalFinal'] as num?)?.toDouble() ?? 0;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: NeumorphicStyle.elevated(colors, radius: 14),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(color: colors.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
+            child: Icon(Icons.receipt_outlined, color: colors.primary, size: 18),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(nombreCliente, style: TextStyle(fontWeight: FontWeight.bold, color: colors.text, fontSize: 13)),
+                Text('$numProductos producto(s) · ${fmt.format(fecha)}',
+                    style: TextStyle(fontSize: 11, color: colors.text.withValues(alpha: 0.5))),
               ],
             ),
           ),
-          const SizedBox(height: 24),
-
-          // Gráfico
-          Text('Desglose diario', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colors.text)),
-          const SizedBox(height: 14),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: NeumorphicStyle.elevated(colors, radius: 16),
-            child: Column(
-              children: datosBarra.entries.map((e) {
-                final pct = maxBarra > 0 ? e.value / maxBarra : 0.0;
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: Row(
-                    children: [
-                      SizedBox(width: 36, child: Text(e.key, style: TextStyle(fontSize: 11, color: colors.text.withValues(alpha: 0.5)))),
-                      Expanded(
-                        child: Stack(
-                          children: [
-                            Container(height: 20, decoration: BoxDecoration(color: colors.primary.withValues(alpha: 0.07), borderRadius: BorderRadius.circular(6))),
-                            FractionallySizedBox(
-                              widthFactor: pct.clamp(0.0, 1.0),
-                              child: Container(height: 20, decoration: BoxDecoration(color: colors.primary.withValues(alpha: e.value > 0 ? 0.75 : 0), borderRadius: BorderRadius.circular(6))),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      SizedBox(
-                        width: 58,
-                        child: Text(
-                          e.value > 0 ? '\$${e.value.toStringAsFixed(0)}' : '—',
-                          textAlign: TextAlign.right,
-                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: e.value > 0 ? colors.primary : colors.text.withValues(alpha: 0.3)),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          Text('Detalle de ventas', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colors.text)),
-          const SizedBox(height: 12),
-          if (enPeriodo.isEmpty)
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 30),
-              alignment: Alignment.center,
-              child: Text('Sin ventas en este período', style: TextStyle(color: colors.text.withValues(alpha: 0.3), fontSize: 13)),
-            )
-          else
-            ...enPeriodo.map((p) => _RecentSaleTile(pedido: p, colors: colors)),
+          Text('\$${total.toStringAsFixed(2)}',
+              style: TextStyle(fontWeight: FontWeight.bold, color: colors.primary, fontSize: 14)),
         ],
       ),
     );
@@ -1244,40 +1422,3 @@ class _StockAlertTile extends StatelessWidget {
   }
 }
 
-class _RecentSaleTile extends StatelessWidget {
-  final Pedido pedido;
-  final NeumorphicColors colors;
-  const _RecentSaleTile({required this.pedido, required this.colors});
-
-  @override
-  Widget build(BuildContext context) {
-    final fmt = DateFormat('dd/MM • HH:mm');
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: NeumorphicStyle.elevated(colors, radius: 14),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: colors.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
-            child: Icon(Icons.receipt_outlined, color: colors.primary, size: 18),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(pedido.nombreCliente, style: TextStyle(fontWeight: FontWeight.bold, color: colors.text, fontSize: 13)),
-                Text('${pedido.items.length} producto(s) · ${fmt.format(pedido.fecha)}',
-                    style: TextStyle(fontSize: 11, color: colors.text.withValues(alpha: 0.5))),
-              ],
-            ),
-          ),
-          Text('\$${pedido.totalFinal.toStringAsFixed(2)}',
-              style: TextStyle(fontWeight: FontWeight.bold, color: colors.primary, fontSize: 14)),
-        ],
-      ),
-    );
-  }
-}

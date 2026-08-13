@@ -6,8 +6,6 @@ import 'package:forra_store/presentation/providers/cart_provider.dart';
 import 'package:forra_store/core/theme/neumorphic_colors.dart';
 import 'package:forra_store/core/utils/neumorphic_style.dart';
 import 'package:forra_store/data/models/cart_item.dart';
-import 'package:forra_store/data/models/pedido.dart';
-import 'package:forra_store/presentation/providers/pedidos_provider.dart';
 
 class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
@@ -175,44 +173,11 @@ class CartScreen extends StatelessWidget {
                         HapticFeedback.heavyImpact();
 
                         final auth = context.read<AuthProvider>();
-                        final pedidosProvider = context.read<PedidosProvider>();
-                        final nombreCliente =
-                            cartProvider.selectedCliente?.nombre ??
-                            'Venta al Público';
-                        final snapshot = List<CartItem>.from(
-                          cartProvider.items.map((item) {
-                            final efectivo = cartProvider.getItemPrice(item);
-                            if (efectivo == item.precioUnitario) return item;
-                            return CartItem(
-                              idProducto: item.idProducto,
-                              idPresentacion: item.idPresentacion,
-                              nombreProducto: item.nombreProducto,
-                              imagenUrl: item.imagenUrl,
-                              unidad: item.unidad,
-                              tamano: item.tamano,
-                              precioUnitario: item.precioUnitario,
-                              precioEfectivo: efectivo,
-                              cantidad: item.cantidad,
-                            );
-                          }),
-                        );
 
                         try {
                           final idVenta = await cartProvider.checkout(
                             idUsuario: auth.idUsuario ?? 0,
                           );
-
-                          final nuevoPedido = Pedido(
-                            id: idVenta.toString(),
-                            fecha: DateTime.now(),
-                            idCliente: cartProvider.selectedCliente?.id,
-                            nombreCliente: nombreCliente,
-                            totalOriginal: cartProvider.totalOriginal,
-                            descuento: cartProvider.totalDescuento,
-                            totalFinal: cartProvider.totalFinal,
-                            items: snapshot,
-                          );
-                          pedidosProvider.agregarPedido(nuevoPedido);
                           cartProvider.clear();
 
                           if (!context.mounted) return;
