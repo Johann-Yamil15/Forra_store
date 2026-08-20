@@ -15,6 +15,7 @@ class _PresForm {
   String unidad;
   final TextEditingController cantidadCtrl;
   final TextEditingController precio;
+  final TextEditingController precioCosto;
   final TextEditingController stock;
   final TextEditingController stockMinimo;
 
@@ -23,6 +24,7 @@ class _PresForm {
     required this.unidad,
     required this.cantidadCtrl,
     required this.precio,
+    required this.precioCosto,
     required this.stock,
     required this.stockMinimo,
   });
@@ -32,6 +34,7 @@ class _PresForm {
         unidad: 'Kg',
         cantidadCtrl: TextEditingController(),
         precio: TextEditingController(),
+        precioCosto: TextEditingController(),
         stock: TextEditingController(text: '0'),
         stockMinimo: TextEditingController(text: '5'),
       );
@@ -41,6 +44,7 @@ class _PresForm {
         unidad: p.unidad,
         cantidadCtrl: TextEditingController(text: p.cantidad),
         precio: TextEditingController(text: p.precio.toStringAsFixed(2)),
+        precioCosto: TextEditingController(text: p.precioCosto?.toStringAsFixed(2) ?? ''),
         stock: TextEditingController(text: p.stock.toString()),
         stockMinimo: TextEditingController(text: p.stockMinimo.toString()),
       );
@@ -48,6 +52,7 @@ class _PresForm {
   void dispose() {
     cantidadCtrl.dispose();
     precio.dispose();
+    precioCosto.dispose();
     stock.dispose();
     stockMinimo.dispose();
   }
@@ -176,6 +181,7 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
         unidad: f.unidad.trim().isEmpty ? 'Kg' : f.unidad,
         cantidad: f.cantidadCtrl.text.trim(),
         precio: double.tryParse(f.precio.text) ?? 0,
+        precioCosto: f.precioCosto.text.trim().isEmpty ? null : double.tryParse(f.precioCosto.text),
         stock: int.tryParse(f.stock.text) ?? 0,
         stockMinimo: int.tryParse(f.stockMinimo.text) ?? 0,
       );
@@ -658,11 +664,19 @@ class _PresentacionFormTileState extends State<_PresentacionFormTile> {
           ),
           const SizedBox(height: 10),
 
-          // Fila 2: Precio, Stock, Mín
+          // Fila 2: Precio, Costo, Stock, Mín
           Row(
             children: [
               Expanded(child: _inlineField('Precio \$', widget.form.precio, colors, hint: '0.00', num: true)),
               const SizedBox(width: 10),
+              Expanded(
+                child: _inlineField('Costo proveedor \$ (opc.)', widget.form.precioCosto, colors, hint: '0.00', num: true),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
               Expanded(child: _inlineField('Stock', widget.form.stock, colors, hint: '0', num: true, isInt: true)),
               const SizedBox(width: 10),
               Expanded(child: _inlineField('Stock mín.', widget.form.stockMinimo, colors, hint: '5', num: true, isInt: true)),

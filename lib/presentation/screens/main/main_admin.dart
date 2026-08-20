@@ -12,6 +12,8 @@ import 'package:forra_store/presentation/screens/home/productos_screen.dart';
 import 'package:forra_store/presentation/screens/profile/profile_screen.dart';
 import 'package:forra_store/presentation/widgets/brand_mark.dart';
 import 'package:forra_store/data/services/admin_service.dart';
+import 'package:forra_store/data/services/venta_service.dart';
+import 'package:forra_store/presentation/screens/home/pedido_detail_screen.dart';
 import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
@@ -673,6 +675,8 @@ class _ReportesAdminScreenState extends State<_ReportesAdminScreen> {
     final total = (_reporte?['totalVentas'] as num?)?.toDouble() ?? 0;
     final descuento = (_reporte?['descuentoTotal'] as num?)?.toDouble() ?? 0;
     final numVentas = (_reporte?['numVentas'] as num?)?.toInt() ?? 0;
+    final gananciaTotal = (_reporte?['gananciaTotal'] as num?)?.toDouble() ?? 0;
+    final gananciaPorProducto = (_reporte?['gananciaPorProducto'] as List?)?.cast<Map<String, dynamic>>() ?? const [];
     final desglose = (_reporte?['desgloseDiario'] as List?)?.cast<Map<String, dynamic>>() ?? const [];
     final ventas = (_reporte?['ventas'] as List?)?.cast<Map<String, dynamic>>() ?? const [];
     final maxBarra = desglose.fold(0.0, (m, e) => math.max(m, (e['total'] as num).toDouble()));
@@ -816,6 +820,23 @@ class _ReportesAdminScreenState extends State<_ReportesAdminScreen> {
                   ],
                 ),
               ),
+              const SizedBox(height: 12),
+
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: NeumorphicStyle.elevated(colors, radius: 16),
+                child: Row(
+                  children: [
+                    Icon(Icons.trending_up, color: Colors.green.shade600, size: 20),
+                    const SizedBox(width: 10),
+                    Text('Ganancia estimada', style: TextStyle(fontSize: 13, color: colors.text.withValues(alpha: 0.6))),
+                    const Spacer(),
+                    Text('\$${gananciaTotal.toStringAsFixed(2)}',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.green.shade600)),
+                  ],
+                ),
+              ),
               const SizedBox(height: 24),
 
               // Gráfico
@@ -862,6 +883,49 @@ class _ReportesAdminScreenState extends State<_ReportesAdminScreen> {
               ),
               const SizedBox(height: 24),
 
+              if (gananciaPorProducto.isNotEmpty) ...[
+                Text('Ganancia por producto', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colors.text)),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: NeumorphicStyle.elevated(colors, radius: 16),
+                  child: Column(
+                    children: gananciaPorProducto.map((g) {
+                      final nombre = g['nombreProducto'] as String? ?? '';
+                      final presentacion = g['descripcionPresentacion'] as String? ?? '';
+                      final ganancia = (g['ganancia'] as num?)?.toDouble() ?? 0;
+                      final ingreso = (g['ingreso'] as num?)?.toDouble() ?? 0;
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(nombre, style: TextStyle(fontWeight: FontWeight.w600, color: colors.text, fontSize: 13), overflow: TextOverflow.ellipsis),
+                                  Text(presentacion, style: TextStyle(fontSize: 11, color: colors.text.withValues(alpha: 0.5))),
+                                ],
+                              ),
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text('\$${ganancia.toStringAsFixed(2)}',
+                                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.green.shade600)),
+                                Text('de \$${ingreso.toStringAsFixed(2)}',
+                                    style: TextStyle(fontSize: 10, color: colors.text.withValues(alpha: 0.4))),
+                              ],
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+                const SizedBox(height: 24),
+              ],
+
               Text('Detalle de ventas', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colors.text)),
               const SizedBox(height: 12),
               if (ventas.isEmpty)
@@ -880,44 +944,78 @@ class _ReportesAdminScreenState extends State<_ReportesAdminScreen> {
   }
 }
 
-class _VentaResumenTile extends StatelessWidget {
+class _VentaResumenTile extends StatefulWidget {
   final Map<String, dynamic> venta;
   final NeumorphicColors colors;
   const _VentaResumenTile({required this.venta, required this.colors});
 
   @override
+  State<_VentaResumenTile> createState() => _VentaResumenTileState();
+}
+
+class _VentaResumenTileState extends State<_VentaResumenTile> {
+  bool _cargando = false;
+
+  Future<void> _abrirDetalle() async {
+    if (_cargando) return;
+    setState(() => _cargando = true);
+    try {
+      final id = int.parse(widget.venta['id'].toString());
+      final pedido = await VentaService.getVentaDetalle(id);
+      if (!mounted) return;
+      Navigator.push(context, MaterialPageRoute(builder: (_) => PedidoDetailScreen(pedido: pedido)));
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No se pudo abrir el detalle: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _cargando = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final colors = widget.colors;
+    final venta = widget.venta;
     final fecha = DateTime.parse(venta['fecha'] as String).toLocal();
     final fmt = DateFormat('dd/MM • HH:mm');
     final nombreCliente = venta['nombreCliente'] as String? ?? 'Venta al Público';
     final numProductos = (venta['numProductos'] as num?)?.toInt() ?? 0;
     final total = (venta['totalFinal'] as num?)?.toDouble() ?? 0;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: NeumorphicStyle.elevated(colors, radius: 14),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: colors.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
-            child: Icon(Icons.receipt_outlined, color: colors.primary, size: 18),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(nombreCliente, style: TextStyle(fontWeight: FontWeight.bold, color: colors.text, fontSize: 13)),
-                Text('$numProductos producto(s) · ${fmt.format(fecha)}',
-                    style: TextStyle(fontSize: 11, color: colors.text.withValues(alpha: 0.5))),
-              ],
+    return GestureDetector(
+      onTap: _abrirDetalle,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(14),
+        decoration: NeumorphicStyle.elevated(colors, radius: 14),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(color: colors.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
+              child: _cargando
+                  ? SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: colors.primary))
+                  : Icon(Icons.receipt_outlined, color: colors.primary, size: 18),
             ),
-          ),
-          Text('\$${total.toStringAsFixed(2)}',
-              style: TextStyle(fontWeight: FontWeight.bold, color: colors.primary, fontSize: 14)),
-        ],
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(nombreCliente, style: TextStyle(fontWeight: FontWeight.bold, color: colors.text, fontSize: 13)),
+                  Text('$numProductos producto(s) · ${fmt.format(fecha)}',
+                      style: TextStyle(fontSize: 11, color: colors.text.withValues(alpha: 0.5))),
+                ],
+              ),
+            ),
+            Text('\$${total.toStringAsFixed(2)}',
+                style: TextStyle(fontWeight: FontWeight.bold, color: colors.primary, fontSize: 14)),
+            Icon(Icons.chevron_right, color: colors.text.withValues(alpha: 0.25), size: 18),
+          ],
+        ),
       ),
     );
   }

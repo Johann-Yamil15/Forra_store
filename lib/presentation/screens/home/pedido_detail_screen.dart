@@ -40,7 +40,7 @@ class PedidoDetailScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'ID: ${pedido.id.substring(0, 8)}',
+                        'ID: #${pedido.id}',
                         style: TextStyle(
                           color: colors.text.withValues(alpha: 0.5),
                           fontSize: 12,

@@ -43,4 +43,10 @@ class VentaService {
     final data = await ApiClient.get('/api/ventas$query') as List;
     return data.map((j) => Pedido.fromMap(j as Map<String, dynamic>)).toList();
   }
+
+  /// Carga el detalle completo (con items) de una venta puntual.
+  static Future<Pedido> getVentaDetalle(int idVenta) async {
+    final data = await ApiClient.get('/api/ventas/$idVenta') as Map<String, dynamic>;
+    return Pedido.fromMap(data);
+  }
 }

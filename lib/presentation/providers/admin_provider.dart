@@ -11,6 +11,7 @@ class PresentacionAdmin {
   String unidad;    // "Kg", "Bulto", "Litro"…
   String cantidad;  // detalle opcional: "50 kg", "suelto", ""
   double precio;
+  double? precioCosto; // precio de proveedor — usado en reportes para calcular ganancia
   int stock;
   int stockMinimo;
 
@@ -19,6 +20,7 @@ class PresentacionAdmin {
     required this.unidad,
     this.cantidad = '',
     required this.precio,
+    this.precioCosto,
     required this.stock,
     required this.stockMinimo,
   });
@@ -35,6 +37,7 @@ class PresentacionAdmin {
     unidad: j['unidad'] as String,
     cantidad: j['cantidad'] as String? ?? '',
     precio: (j['precio'] as num).toDouble(),
+    precioCosto: (j['precioCosto'] as num?)?.toDouble(),
     stock: j['stock'] as int,
     stockMinimo: j['stockMinimo'] as int,
   );
@@ -43,6 +46,7 @@ class PresentacionAdmin {
     'unidad': unidad,
     'cantidad': cantidad,
     'precio': precio,
+    'precioCosto': precioCosto,
     'stock': stock,
     'stockMinimo': stockMinimo,
   };

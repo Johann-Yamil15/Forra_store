@@ -96,10 +96,19 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colors = isDark ? NeumorphicColors.dark : NeumorphicColors.light;
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    // hideCurrentSnackBar (no clearSnackBars) para que un segundo toast no
+    // se encole detrás del primero y quede tapando el botón mucho más tiempo
+    // del que tarda una sola confirmación.
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
       SnackBar(
         backgroundColor: isError ? colors.primary : colors.primary,
         behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+        // Suficiente para despejar el botón "Agregar al carrito" (56 de alto)
+        // más su padding, así el toast no lo tapa mientras desaparece.
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 96),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         content: Row(
           children: [
