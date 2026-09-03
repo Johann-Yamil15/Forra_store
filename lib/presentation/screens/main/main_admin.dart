@@ -828,12 +828,21 @@ class _ReportesAdminScreenState extends State<_ReportesAdminScreen> {
                 decoration: NeumorphicStyle.elevated(colors, radius: 16),
                 child: Row(
                   children: [
-                    Icon(Icons.trending_up, color: Colors.green.shade600, size: 20),
+                    Icon(
+                      gananciaTotal < 0 ? Icons.trending_down : Icons.trending_up,
+                      color: gananciaTotal < 0 ? Colors.red.shade600 : Colors.green.shade600,
+                      size: 20,
+                    ),
                     const SizedBox(width: 10),
-                    Text('Ganancia estimada', style: TextStyle(fontSize: 13, color: colors.text.withValues(alpha: 0.6))),
+                    Text(gananciaTotal < 0 ? 'Pérdida estimada' : 'Ganancia estimada',
+                        style: TextStyle(fontSize: 13, color: colors.text.withValues(alpha: 0.6))),
                     const Spacer(),
                     Text('\$${gananciaTotal.toStringAsFixed(2)}',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.green.shade600)),
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: gananciaTotal < 0 ? Colors.red.shade600 : Colors.green.shade600,
+                        )),
                   ],
                 ),
               ),
@@ -885,6 +894,11 @@ class _ReportesAdminScreenState extends State<_ReportesAdminScreen> {
 
               if (gananciaPorProducto.isNotEmpty) ...[
                 Text('Ganancia por producto', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colors.text)),
+                const SizedBox(height: 4),
+                Text(
+                  'Costo tomado del precio de proveedor al momento de vender; sin costo registrado se cuenta como \$0 (la ganancia mostrada se ve inflada en ese caso).',
+                  style: TextStyle(fontSize: 10, color: colors.text.withValues(alpha: 0.4)),
+                ),
                 const SizedBox(height: 12),
                 Container(
                   padding: const EdgeInsets.all(16),
@@ -912,7 +926,11 @@ class _ReportesAdminScreenState extends State<_ReportesAdminScreen> {
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 Text('\$${ganancia.toStringAsFixed(2)}',
-                                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.green.shade600)),
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                      color: ganancia < 0 ? Colors.red.shade600 : Colors.green.shade600,
+                                    )),
                                 Text('de \$${ingreso.toStringAsFixed(2)}',
                                     style: TextStyle(fontSize: 10, color: colors.text.withValues(alpha: 0.4))),
                               ],

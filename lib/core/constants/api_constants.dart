@@ -1,6 +1,6 @@
 class ApiConstants {
   // API .NET 9 + PostgreSQL desplegada en Railway.
-  static const String baseUrl = 'https://forracontrol-api-production.up.railway.app';
+  static const String baseUrl = 'https://forracontrol-api-production-2a53.up.railway.app';
 
   static const Duration timeout = Duration(seconds: 20);
 

@@ -151,7 +151,10 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
   }
 
   Future<void> _save() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      _snack('Revisa los campos marcados en rojo');
+      return;
+    }
     if (_presentaciones.isEmpty) {
       _snack('Agrega al menos una presentación');
       return;
@@ -212,13 +215,13 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
           imagenUrl: _existingImageUrl,
         );
         for (final id in _deletedIds) {
-          provider.deletePresentacion(idProducto, id);
+          await provider.deletePresentacion(idProducto, id);
         }
         for (final f in presLista) {
           if (f.id != 0) {
-            provider.updatePresentacion(idProducto, f.id, f);
+            await provider.updatePresentacion(idProducto, f.id, f);
           } else {
-            provider.addPresentacion(idProducto, f);
+            await provider.addPresentacion(idProducto, f);
           }
         }
       }
@@ -670,7 +673,8 @@ class _PresentacionFormTileState extends State<_PresentacionFormTile> {
               Expanded(child: _inlineField('Precio \$', widget.form.precio, colors, hint: '0.00', num: true)),
               const SizedBox(width: 10),
               Expanded(
-                child: _inlineField('Costo proveedor \$ (opc.)', widget.form.precioCosto, colors, hint: '0.00', num: true),
+                child: _inlineField('Costo proveedor \$ (opc.)', widget.form.precioCosto, colors,
+                    hint: '0.00', num: true, optional: true),
               ),
             ],
           ),
@@ -693,7 +697,7 @@ class _PresentacionFormTileState extends State<_PresentacionFormTile> {
       );
 
   Widget _inlineField(String label, TextEditingController ctrl, NeumorphicColors colors,
-      {String hint = '', bool num = false, bool isInt = false}) {
+      {String hint = '', bool num = false, bool isInt = false, bool optional = false}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -711,7 +715,7 @@ class _PresentacionFormTileState extends State<_PresentacionFormTile> {
                 ? [FilteringTextInputFormatter.allow(isInt ? RegExp(r'\d') : RegExp(r'[\d.]'))]
                 : null,
             style: TextStyle(color: colors.text, fontSize: 14),
-            validator: num ? (v) => (v == null || v.trim().isEmpty) ? '*' : null : null,
+            validator: (num && !optional) ? (v) => (v == null || v.trim().isEmpty) ? '*' : null : null,
             decoration: InputDecoration(
               border: InputBorder.none,
               hintText: hint,

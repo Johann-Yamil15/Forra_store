@@ -367,6 +367,7 @@ class AdminProvider extends ChangeNotifier {
         unidad: data.unidad,
         cantidad: data.cantidad,
         precio: data.precio,
+        precioCosto: data.precioCosto,
         stock: data.stock,
         stockMinimo: data.stockMinimo,
       );
