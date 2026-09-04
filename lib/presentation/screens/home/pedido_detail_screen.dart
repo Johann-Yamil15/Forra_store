@@ -42,7 +42,7 @@ class PedidoDetailScreen extends StatelessWidget {
                       Text(
                         'ID: #${pedido.id}',
                         style: TextStyle(
-                          color: colors.text.withValues(alpha: 0.5),
+                          color: colors.textSecondary,
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),
@@ -72,7 +72,7 @@ class PedidoDetailScreen extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     dateFormat.format(pedido.fecha),
-                    style: TextStyle(color: colors.text.withValues(alpha: 0.6)),
+                    style: TextStyle(color: colors.textSecondary),
                   ),
                 ],
               ),
@@ -169,7 +169,7 @@ class _PedidoItemTile extends StatelessWidget {
                 ),
                 Text(
                   '${item.cantidad} x \$${(item.precioEfectivo ?? item.precioUnitario).toStringAsFixed(2)} (${item.unidad})',
-                  style: TextStyle(fontSize: 12, color: colors.text.withValues(alpha: 0.6)),
+                  style: TextStyle(fontSize: 12, color: colors.textSecondary),
                 ),
               ],
             ),

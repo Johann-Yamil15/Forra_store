@@ -178,7 +178,7 @@ class _ClienteFormScreenState extends State<ClienteFormScreen> {
 
   Widget _label(String text, NeumorphicColors colors) => Text(
         text,
-        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: colors.text.withValues(alpha: 0.5), letterSpacing: 0.5),
+        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: colors.textSecondary, letterSpacing: 0.5),
       );
 
   Widget _field({
@@ -200,7 +200,7 @@ class _ClienteFormScreenState extends State<ClienteFormScreen> {
         decoration: InputDecoration(
           border: InputBorder.none,
           hintText: hint,
-          hintStyle: TextStyle(color: colors.text.withValues(alpha: 0.3)),
+          hintStyle: TextStyle(color: colors.textSecondary),
           icon: icon != null ? Icon(icon, color: colors.primary, size: 20) : null,
           contentPadding: const EdgeInsets.symmetric(vertical: 14),
         ),
@@ -217,7 +217,7 @@ class _ClienteFormScreenState extends State<ClienteFormScreen> {
         title: Text('¿Eliminar cliente?', style: TextStyle(color: colors.text, fontWeight: FontWeight.bold)),
         content: Text(
           'Se eliminarán también todos sus precios especiales. Esta acción no se puede deshacer.',
-          style: TextStyle(color: colors.text.withValues(alpha: 0.6)),
+          style: TextStyle(color: colors.textSecondary),
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('Cancelar', style: TextStyle(color: colors.text))),
@@ -348,7 +348,7 @@ class _ClienteDescuentosScreenState extends State<ClienteDescuentosScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Precios especiales', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.text)),
-            Text(widget.cliente.nombre, style: TextStyle(fontSize: 11, color: colors.text.withValues(alpha: 0.5)), overflow: TextOverflow.ellipsis),
+            Text(widget.cliente.nombre, style: TextStyle(fontSize: 11, color: colors.textSecondary), overflow: TextOverflow.ellipsis),
           ],
         ),
         actions: [
@@ -401,11 +401,11 @@ class _ClienteDescuentosScreenState extends State<ClienteDescuentosScreen> {
                 style: TextStyle(color: colors.text, fontSize: 14),
                 decoration: InputDecoration(
                   hintText: 'Buscar producto o presentación…',
-                  hintStyle: TextStyle(color: colors.text.withValues(alpha: 0.4), fontSize: 13),
+                  hintStyle: TextStyle(color: colors.textSecondary, fontSize: 13),
                   prefixIcon: Icon(Icons.search, color: colors.primary, size: 20),
                   suffixIcon: _query.isNotEmpty
                       ? IconButton(
-                          icon: Icon(Icons.clear, color: colors.text.withValues(alpha: 0.5), size: 18),
+                          icon: Icon(Icons.clear, color: colors.textSecondary, size: 18),
                           onPressed: () {
                             _searchCtrl.clear();
                             setState(() => _query = '');
@@ -430,7 +430,7 @@ class _ClienteDescuentosScreenState extends State<ClienteDescuentosScreen> {
                         Icon(Icons.search_off, size: 48, color: colors.text.withValues(alpha: 0.15)),
                         const SizedBox(height: 12),
                         Text('Sin resultados para "$_query"',
-                            style: TextStyle(color: colors.text.withValues(alpha: 0.35), fontSize: 13)),
+                            style: TextStyle(color: colors.textSecondary, fontSize: 13)),
                       ],
                     ),
                   )
@@ -459,7 +459,7 @@ class _ClienteDescuentosScreenState extends State<ClienteDescuentosScreen> {
                           const SizedBox(width: 8),
                           Text(
                             producto.categoria,
-                            style: TextStyle(fontSize: 11, color: colors.text.withValues(alpha: 0.4)),
+                            style: TextStyle(fontSize: 11, color: colors.textSecondary),
                           ),
                         ],
                       ),
@@ -551,7 +551,7 @@ class _PrecioEspecialRowState extends State<_PrecioEspecialRow> {
                 Text(pr.descripcion, style: TextStyle(fontWeight: FontWeight.w600, color: colors.text, fontSize: 13)),
                 Row(
                   children: [
-                    Text('Lista: \$${pr.precio.toStringAsFixed(2)}', style: TextStyle(fontSize: 11, color: colors.text.withValues(alpha: 0.45))),
+                    Text('Lista: \$${pr.precio.toStringAsFixed(2)}', style: TextStyle(fontSize: 11, color: colors.textSecondary)),
                     if (_hasDiscount) ...[
                       const SizedBox(width: 8),
                       Text(
@@ -582,9 +582,9 @@ class _PrecioEspecialRowState extends State<_PrecioEspecialRow> {
                 decoration: InputDecoration(
                   border: InputBorder.none,
                   hintText: 'Sin desc.',
-                  hintStyle: TextStyle(color: colors.text.withValues(alpha: 0.3), fontSize: 12),
+                  hintStyle: TextStyle(color: colors.textSecondary, fontSize: 12),
                   prefixText: '\$',
-                  prefixStyle: TextStyle(color: colors.text.withValues(alpha: 0.5), fontSize: 14),
+                  prefixStyle: TextStyle(color: colors.textSecondary, fontSize: 14),
                   contentPadding: const EdgeInsets.symmetric(vertical: 10),
                   isDense: true,
                 ),

@@ -154,7 +154,7 @@ class _ProductosScreenState extends State<ProductosScreen>
             children: [
               Icon(Icons.cloud_off, size: 56, color: colors.text.withValues(alpha: 0.3)),
               const SizedBox(height: 16),
-              Text(_errorMsg!, textAlign: TextAlign.center, style: TextStyle(color: colors.text.withValues(alpha: 0.6))),
+              Text(_errorMsg!, textAlign: TextAlign.center, style: TextStyle(color: colors.textSecondary)),
               const SizedBox(height: 20),
               ElevatedButton.icon(
                 onPressed: _cargarProductos,
@@ -226,7 +226,7 @@ class _ProductosScreenState extends State<ProductosScreen>
         style: TextStyle(color: colors.text),
         decoration: InputDecoration(
           hintText: 'Buscar productos...',
-          hintStyle: TextStyle(color: colors.text.withValues(alpha: 0.5)),
+          hintStyle: TextStyle(color: colors.textSecondary),
           prefixIcon: Icon(Icons.search, color: colors.primary),
           suffixIcon:
               _query.isNotEmpty
@@ -327,7 +327,7 @@ class _ProductosScreenState extends State<ProductosScreen>
           mainAxisSize: MainAxisSize.min,
           children: [
             if (icon != null) ...[
-              Icon(icon, size: 16, color: filled ? Colors.white : colors.text.withValues(alpha: 0.65)),
+              Icon(icon, size: 16, color: filled ? Colors.white : colors.textSecondary),
               const SizedBox(width: 6),
             ],
             Text(
@@ -335,12 +335,12 @@ class _ProductosScreenState extends State<ProductosScreen>
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: filled ? Colors.white : colors.text.withValues(alpha: 0.75),
+                color: filled ? Colors.white : colors.textSecondary,
               ),
             ),
             if (icon == null) ...[
               const SizedBox(width: 2),
-              Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: filled ? Colors.white : colors.text.withValues(alpha: 0.5)),
+              Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: filled ? Colors.white : colors.textSecondary),
             ],
             if (badge != null) ...[
               const SizedBox(width: 6),
@@ -372,7 +372,7 @@ class _ProductosScreenState extends State<ProductosScreen>
               '${_allMatches.length} resultados • Página $_currentPage de $_totalPages',
               style: TextStyle(
                 fontSize: 12,
-                color: colors.text.withValues(alpha: 0.6),
+                color: colors.textSecondary,
               ),
             ),
           ],
@@ -418,7 +418,7 @@ class _ProductosScreenState extends State<ProductosScreen>
           ),
           Text(
             'Intenta cambiar filtros o búsqueda',
-            style: TextStyle(color: colors.text.withValues(alpha: 0.6)),
+            style: TextStyle(color: colors.textSecondary),
           ),
         ],
       ),

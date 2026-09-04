@@ -169,7 +169,7 @@ class _LoginScreenState extends State<LoginScreen>
                             'Ingresa tus credenciales para continuar',
                             style: TextStyle(
                               fontSize: 13,
-                              color: colors.text.withValues(alpha: 0.45),
+                              color: colors.textSecondary,
                             ),
                           ),
                           const SizedBox(height: 32),
@@ -199,7 +199,7 @@ class _LoginScreenState extends State<LoginScreen>
                                 _obscure
                                     ? Icons.visibility_off_outlined
                                     : Icons.visibility_outlined,
-                                color: colors.text.withValues(alpha: 0.4),
+                                color: colors.textSecondary,
                                 size: 20,
                               ),
                               onPressed:
@@ -300,7 +300,7 @@ class _LoginScreenState extends State<LoginScreen>
     style: TextStyle(
       fontSize: 13,
       fontWeight: FontWeight.w700,
-      color: colors.text.withValues(alpha: 0.55),
+      color: colors.textSecondary,
       letterSpacing: 0.5,
     ),
   );
@@ -325,7 +325,7 @@ class _LoginScreenState extends State<LoginScreen>
         decoration: InputDecoration(
           border: InputBorder.none,
           hintText: hint,
-          hintStyle: TextStyle(color: colors.text.withValues(alpha: 0.3)),
+          hintStyle: TextStyle(color: colors.textSecondary),
           icon:
               icon != null ? Icon(icon, color: colors.primary, size: 20) : null,
           suffixIcon: suffix,

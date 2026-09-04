@@ -160,7 +160,7 @@ class _InternalAppBar extends StatelessWidget {
               child: IconButton(
                 padding: EdgeInsets.zero,
                 onPressed: () {},
-                icon: Icon(Icons.notifications_none_rounded, color: colors.text.withValues(alpha: 0.7), size: 20),
+                icon: Icon(Icons.notifications_none_rounded, color: colors.textSecondary, size: 20),
               ),
             ),
           ],
@@ -262,7 +262,7 @@ class _FloatingNavBar extends StatelessWidget {
                                       key: ValueKey('${index}_$isSelected'),
                                       color: isSelected
                                           ? colors.primary
-                                          : colors.text.withValues(alpha: 0.35),
+                                          : colors.textSecondary,
                                       size: 24,
                                     ),
                                   ),

@@ -82,9 +82,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
 
     _showSnack(
       icon: Icons.check_circle_outline,
-      text:
-          'Añadido: ${widget.productoPreview.nombreProducto} '
-          '${_selected!.unidad} ${_selected!.tamano} x$_cantidad',
+      text: 'Agregado',
     );
   }
 
@@ -103,18 +101,19 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     messenger.hideCurrentSnackBar();
     messenger.showSnackBar(
       SnackBar(
-        backgroundColor: isError ? colors.primary : colors.primary,
+        backgroundColor: isError ? colors.primary : Colors.green.shade600,
         behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 2),
+        duration: const Duration(seconds: 1),
         // Suficiente para despejar el botón "Agregar al carrito" (56 de alto)
         // más su padding, así el toast no lo tapa mientras desaparece.
         margin: const EdgeInsets.fromLTRB(16, 0, 16, 96),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         content: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: Colors.white),
+            Icon(icon, color: Colors.white, size: 18),
             const SizedBox(width: 8),
-            Expanded(child: Text(text)),
+            Text(text),
           ],
         ),
       ),
@@ -147,7 +146,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                           child: Icon(
                             Icons.image_not_supported_outlined,
                             size: 80,
-                            color: colors.text.withValues(alpha: 0.7),
+                            color: colors.text.withValues(alpha: 0.4),
                           ),
                         ),
               ),
@@ -227,7 +226,7 @@ class _Header extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           '${p.categoria} • ${p.subcategoria} • ${p.uso}',
-          style: TextStyle(color: colors.text.withValues(alpha: 0.7)),
+          style: TextStyle(color: colors.textSecondary),
         ),
       ],
     );
@@ -259,7 +258,7 @@ class _Description extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             p.descripcionProducto,
-            style: TextStyle(color: colors.text.withValues(alpha: 0.7), height: 1.5),
+            style: TextStyle(color: colors.textSecondary, height: 1.5),
           ),
         ],
       ),
@@ -349,7 +348,7 @@ class _CartSection extends StatelessWidget {
                       'Precio unitario',
                       style: TextStyle(
                         fontSize: 12,
-                        color: colors.text.withValues(alpha: 0.6),
+                        color: colors.textSecondary,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -370,7 +369,7 @@ class _CartSection extends StatelessWidget {
                       'Total',
                       style: TextStyle(
                         fontSize: 12,
-                        color: colors.text.withValues(alpha: 0.6),
+                        color: colors.textSecondary,
                       ),
                     ),
                     const SizedBox(height: 4),

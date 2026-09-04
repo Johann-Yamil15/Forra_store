@@ -61,7 +61,7 @@ class CartScreen extends StatelessWidget {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: colors.text.withValues(alpha: 0.5),
+              color: colors.textSecondary,
             ),
           ),
         ],
@@ -104,13 +104,13 @@ class CartScreen extends StatelessWidget {
                     Text(
                       'Subtotal',
                       style: TextStyle(
-                        color: colors.text.withValues(alpha: 0.6),
+                        color: colors.textSecondary,
                       ),
                     ),
                     Text(
                       '\$${cartProvider.totalOriginal.toStringAsFixed(2)}',
                       style: TextStyle(
-                        color: colors.text.withValues(alpha: 0.6),
+                        color: colors.textSecondary,
                         decoration: TextDecoration.lineThrough,
                       ),
                     ),
@@ -324,7 +324,7 @@ class CartScreen extends StatelessWidget {
             color:
                 cartProvider.selectedCliente != null
                     ? colors.text
-                    : colors.text.withValues(alpha: 0.5),
+                    : colors.textSecondary,
             fontWeight:
                 cartProvider.selectedCliente != null
                     ? FontWeight.bold
@@ -333,7 +333,7 @@ class CartScreen extends StatelessWidget {
         ),
         trailing: Icon(
           Icons.keyboard_arrow_down,
-          color: colors.text.withValues(alpha: 0.5),
+          color: colors.textSecondary,
         ),
         onTap: () => _showCustomerPicker(context, cartProvider, colors),
       ),
@@ -512,7 +512,7 @@ class _CartItemTile extends StatelessWidget {
                   '${item.tamano} ${item.unidad}',
                   style: TextStyle(
                     fontSize: 12,
-                    color: colors.text.withValues(alpha: 0.6),
+                    color: colors.textSecondary,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -525,7 +525,7 @@ class _CartItemTile extends StatelessWidget {
                         '\$${item.precioUnitario.toStringAsFixed(2)}',
                         style: TextStyle(
                           fontSize: 12,
-                          color: colors.text.withValues(alpha: 0.4),
+                          color: colors.textSecondary,
                           decoration: TextDecoration.lineThrough,
                         ),
                       ),

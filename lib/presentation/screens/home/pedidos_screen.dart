@@ -100,7 +100,7 @@ class _PedidosScreenState extends State<PedidosScreen> {
                                   const SizedBox(height: 8),
                                   Padding(
                                     padding: const EdgeInsets.symmetric(horizontal: 24),
-                                    child: Text(_error!, textAlign: TextAlign.center, style: TextStyle(color: colors.text.withValues(alpha: 0.5), fontSize: 12)),
+                                    child: Text(_error!, textAlign: TextAlign.center, style: TextStyle(color: colors.textSecondary, fontSize: 12)),
                                   ),
                                   const SizedBox(height: 12),
                                   TextButton(onPressed: _cargar, child: const Text('Reintentar')),
@@ -140,7 +140,7 @@ class _PedidosScreenState extends State<PedidosScreen> {
                                             Text(
                                               dateFormat.format(pedido.fecha),
                                               style: TextStyle(
-                                                color: colors.text.withValues(alpha: 0.5),
+                                                color: colors.textSecondary,
                                                 fontSize: 12,
                                               ),
                                             ),
@@ -167,7 +167,7 @@ class _PedidosScreenState extends State<PedidosScreen> {
                                         Text(
                                           '${pedido.items.length} productos • Finalizado',
                                           style: TextStyle(
-                                            color: colors.text.withValues(alpha: 0.6),
+                                            color: colors.textSecondary,
                                             fontSize: 12,
                                           ),
                                         ),
@@ -195,7 +195,7 @@ class _PedidosScreenState extends State<PedidosScreen> {
             const SizedBox(height: 24),
             Text(
               'Aún no hay pedidos realizados',
-              style: TextStyle(color: colors.text.withValues(alpha: 0.5), fontSize: 16),
+              style: TextStyle(color: colors.textSecondary, fontSize: 16),
             ),
           ],
         ),

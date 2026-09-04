@@ -122,7 +122,7 @@ class _PresentationTile extends StatelessWidget {
                       Text(
                         'Stock: ${pres.stock}',
                         style: TextStyle(
-                          color: colors.text.withValues(alpha: 0.7),
+                          color: colors.textSecondary,
                           fontSize: 12,
                         ),
                       ),

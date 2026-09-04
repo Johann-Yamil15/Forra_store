@@ -235,7 +235,7 @@ class _AdminNavBar extends StatelessWidget {
                                   child: Icon(
                                     isSelected ? item.activeIcon : item.icon,
                                     key: ValueKey('${index}_$isSelected'),
-                                    color: isSelected ? colors.primary : colors.text.withValues(alpha: 0.35),
+                                    color: isSelected ? colors.primary : colors.textSecondary,
                                     size: 24,
                                   ),
                                 ),
@@ -347,7 +347,7 @@ class _DashboardAdminScreenState extends State<_DashboardAdminScreen> {
                             const SizedBox(height: 8),
                             Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 24),
-                              child: Text(_error!, textAlign: TextAlign.center, style: TextStyle(color: colors.text.withValues(alpha: 0.5), fontSize: 12)),
+                              child: Text(_error!, textAlign: TextAlign.center, style: TextStyle(color: colors.textSecondary, fontSize: 12)),
                             ),
                             const SizedBox(height: 12),
                             TextButton(onPressed: _cargar, child: const Text('Reintentar')),
@@ -397,14 +397,14 @@ class _DashboardAdminScreenState extends State<_DashboardAdminScreen> {
             children: [
               Text('$greeting, Admin', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: colors.text)),
               const SizedBox(height: 4),
-              Text(dateStr, style: TextStyle(fontSize: 13, color: colors.text.withValues(alpha: 0.45))),
+              Text(dateStr, style: TextStyle(fontSize: 13, color: colors.textSecondary)),
             ],
           ),
         ),
         Container(
           padding: const EdgeInsets.all(12),
           decoration: NeumorphicStyle.elevated(colors, radius: 14),
-          child: Icon(Icons.notifications_none_rounded, color: colors.text.withValues(alpha: 0.5)),
+          child: Icon(Icons.notifications_none_rounded, color: colors.textSecondary),
         ),
       ],
     );
@@ -487,7 +487,7 @@ class _DashboardAdminScreenState extends State<_DashboardAdminScreen> {
   Widget _emptyHint(String text, NeumorphicColors colors) => Container(
         padding: const EdgeInsets.symmetric(vertical: 20),
         alignment: Alignment.center,
-        child: Text(text, style: TextStyle(color: colors.text.withValues(alpha: 0.35), fontSize: 13)),
+        child: Text(text, style: TextStyle(color: colors.textSecondary, fontSize: 13)),
       );
 }
 
@@ -540,7 +540,7 @@ class _VenderAdminScreenState extends State<_VenderAdminScreen> with SingleTicke
               ),
               indicatorSize: TabBarIndicatorSize.tab,
               labelColor: Colors.white,
-              unselectedLabelColor: colors.text.withValues(alpha: 0.4),
+              unselectedLabelColor: colors.textSecondary,
               labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
               dividerColor: Colors.transparent,
               tabs: [
@@ -713,7 +713,7 @@ class _ReportesAdminScreenState extends State<_ReportesAdminScreen> {
                           child: Text(
                             _labels[i],
                             textAlign: TextAlign.center,
-                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: sel ? Colors.white : colors.text.withValues(alpha: 0.4)),
+                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: sel ? Colors.white : colors.textSecondary),
                           ),
                         ),
                       ),
@@ -732,7 +732,7 @@ class _ReportesAdminScreenState extends State<_ReportesAdminScreen> {
                               boxShadow: [BoxShadow(color: colors.primary.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 3))],
                             )
                           : const BoxDecoration(),
-                      child: Icon(Icons.calendar_month_outlined, size: 18, color: _periodo == -1 ? Colors.white : colors.text.withValues(alpha: 0.4)),
+                      child: Icon(Icons.calendar_month_outlined, size: 18, color: _periodo == -1 ? Colors.white : colors.textSecondary),
                     ),
                   ),
                 ],
@@ -781,7 +781,7 @@ class _ReportesAdminScreenState extends State<_ReportesAdminScreen> {
                   children: [
                     Icon(Icons.cloud_off_outlined, color: colors.text.withValues(alpha: 0.3), size: 32),
                     const SizedBox(height: 8),
-                    Text(_error!, textAlign: TextAlign.center, style: TextStyle(color: colors.text.withValues(alpha: 0.5), fontSize: 12)),
+                    Text(_error!, textAlign: TextAlign.center, style: TextStyle(color: colors.textSecondary, fontSize: 12)),
                     const SizedBox(height: 12),
                     TextButton(onPressed: _cargarReporte, child: const Text('Reintentar')),
                   ],
@@ -835,7 +835,7 @@ class _ReportesAdminScreenState extends State<_ReportesAdminScreen> {
                     ),
                     const SizedBox(width: 10),
                     Text(gananciaTotal < 0 ? 'Pérdida estimada' : 'Ganancia estimada',
-                        style: TextStyle(fontSize: 13, color: colors.text.withValues(alpha: 0.6))),
+                        style: TextStyle(fontSize: 13, color: colors.textSecondary)),
                     const Spacer(),
                     Text('\$${gananciaTotal.toStringAsFixed(2)}',
                         style: TextStyle(
@@ -863,7 +863,7 @@ class _ReportesAdminScreenState extends State<_ReportesAdminScreen> {
                       padding: const EdgeInsets.only(bottom: 10),
                       child: Row(
                         children: [
-                          SizedBox(width: 46, child: Text(etiqueta, style: TextStyle(fontSize: 11, color: colors.text.withValues(alpha: 0.5)))),
+                          SizedBox(width: 46, child: Text(etiqueta, style: TextStyle(fontSize: 11, color: colors.textSecondary))),
                           Expanded(
                             child: Stack(
                               children: [
@@ -881,7 +881,7 @@ class _ReportesAdminScreenState extends State<_ReportesAdminScreen> {
                             child: Text(
                               valor > 0 ? '\$${valor.toStringAsFixed(0)}' : '—',
                               textAlign: TextAlign.right,
-                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: valor > 0 ? colors.primary : colors.text.withValues(alpha: 0.3)),
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: valor > 0 ? colors.primary : colors.textSecondary),
                             ),
                           ),
                         ],
@@ -897,7 +897,7 @@ class _ReportesAdminScreenState extends State<_ReportesAdminScreen> {
                 const SizedBox(height: 4),
                 Text(
                   'Costo tomado del precio de proveedor al momento de vender; sin costo registrado se cuenta como \$0 (la ganancia mostrada se ve inflada en ese caso).',
-                  style: TextStyle(fontSize: 10, color: colors.text.withValues(alpha: 0.4)),
+                  style: TextStyle(fontSize: 10, color: colors.textSecondary),
                 ),
                 const SizedBox(height: 12),
                 Container(
@@ -918,7 +918,7 @@ class _ReportesAdminScreenState extends State<_ReportesAdminScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(nombre, style: TextStyle(fontWeight: FontWeight.w600, color: colors.text, fontSize: 13), overflow: TextOverflow.ellipsis),
-                                  Text(presentacion, style: TextStyle(fontSize: 11, color: colors.text.withValues(alpha: 0.5))),
+                                  Text(presentacion, style: TextStyle(fontSize: 11, color: colors.textSecondary)),
                                 ],
                               ),
                             ),
@@ -932,7 +932,7 @@ class _ReportesAdminScreenState extends State<_ReportesAdminScreen> {
                                       color: ganancia < 0 ? Colors.red.shade600 : Colors.green.shade600,
                                     )),
                                 Text('de \$${ingreso.toStringAsFixed(2)}',
-                                    style: TextStyle(fontSize: 10, color: colors.text.withValues(alpha: 0.4))),
+                                    style: TextStyle(fontSize: 10, color: colors.textSecondary)),
                               ],
                             ),
                           ],
@@ -950,7 +950,7 @@ class _ReportesAdminScreenState extends State<_ReportesAdminScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(vertical: 30),
                   alignment: Alignment.center,
-                  child: Text('Sin ventas en este período', style: TextStyle(color: colors.text.withValues(alpha: 0.3), fontSize: 13)),
+                  child: Text('Sin ventas en este período', style: TextStyle(color: colors.textSecondary, fontSize: 13)),
                 )
               else
                 ...ventas.map((v) => _VentaResumenTile(venta: v, colors: colors)),
@@ -1025,7 +1025,7 @@ class _VentaResumenTileState extends State<_VentaResumenTile> {
                 children: [
                   Text(nombreCliente, style: TextStyle(fontWeight: FontWeight.bold, color: colors.text, fontSize: 13)),
                   Text('$numProductos producto(s) · ${fmt.format(fecha)}',
-                      style: TextStyle(fontSize: 11, color: colors.text.withValues(alpha: 0.5))),
+                      style: TextStyle(fontSize: 11, color: colors.textSecondary)),
                 ],
               ),
             ),
@@ -1104,7 +1104,7 @@ class _TiendaAdminScreenState extends State<_TiendaAdminScreen> with SingleTicke
               ),
               indicatorSize: TabBarIndicatorSize.tab,
               labelColor: Colors.white,
-              unselectedLabelColor: colors.text.withValues(alpha: 0.4),
+              unselectedLabelColor: colors.textSecondary,
               labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
               dividerColor: Colors.transparent,
               tabs: const [Tab(text: 'Productos'), Tab(text: 'Clientes')],
@@ -1167,7 +1167,7 @@ class _ProductosAdminList extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(p.nombre, style: TextStyle(fontWeight: FontWeight.bold, color: colors.text)),
-                        Text(p.categoria, style: TextStyle(fontSize: 11, color: colors.text.withValues(alpha: 0.45))),
+                        Text(p.categoria, style: TextStyle(fontSize: 11, color: colors.textSecondary)),
                       ],
                     ),
                   ),
@@ -1195,7 +1195,7 @@ class _ProductosAdminList extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               ...p.presentaciones.map((pr) {
-                final c = pr.enAlerta ? colors.secondary : colors.text.withValues(alpha: 0.5);
+                final c = pr.enAlerta ? colors.secondary : colors.textSecondary;
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 6),
                   child: Row(
@@ -1209,7 +1209,7 @@ class _ProductosAdminList extends StatelessWidget {
                       Expanded(
                         child: Text(
                           pr.descripcion,
-                          style: TextStyle(fontSize: 12, color: colors.text.withValues(alpha: 0.65)),
+                          style: TextStyle(fontSize: 12, color: colors.textSecondary),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -1221,7 +1221,7 @@ class _ProductosAdminList extends StatelessWidget {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text('\$${pr.precio.toStringAsFixed(2)}', style: TextStyle(fontSize: 12, color: colors.text.withValues(alpha: 0.5))),
+                              Text('\$${pr.precio.toStringAsFixed(2)}', style: TextStyle(fontSize: 12, color: colors.textSecondary)),
                               const SizedBox(width: 12),
                               Text('${pr.stock} uds.', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: c)),
                             ],
@@ -1247,7 +1247,7 @@ class _ProductosAdminList extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text('¿Eliminar producto?', style: TextStyle(color: colors.text, fontWeight: FontWeight.bold)),
         content: Text('Se eliminará "${p.nombre}" y sus presentaciones. Esta acción no se puede deshacer.',
-            style: TextStyle(color: colors.text.withValues(alpha: 0.6))),
+            style: TextStyle(color: colors.textSecondary)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Cancelar', style: TextStyle(color: colors.text))),
           TextButton(
@@ -1305,9 +1305,9 @@ class _ClientesAdminList extends StatelessWidget {
                           Text(c.nombre, style: TextStyle(fontWeight: FontWeight.bold, color: colors.text, fontSize: 13)),
                           Row(
                             children: [
-                              Icon(Icons.phone_outlined, size: 11, color: colors.text.withValues(alpha: 0.4)),
+                              Icon(Icons.phone_outlined, size: 11, color: colors.textSecondary),
                               const SizedBox(width: 4),
-                              Text(c.telefono, style: TextStyle(fontSize: 11, color: colors.text.withValues(alpha: 0.45))),
+                              Text(c.telefono, style: TextStyle(fontSize: 11, color: colors.textSecondary)),
                             ],
                           ),
                         ],
@@ -1338,7 +1338,7 @@ class _ClientesAdminList extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('${c.precios.length} precio${c.precios.length != 1 ? "s" : ""} especial${c.precios.length != 1 ? "es" : ""}',
-                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: colors.text.withValues(alpha: 0.5))),
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: colors.textSecondary)),
                         const SizedBox(height: 8),
                         ...c.precios.map((pr) => Padding(
                               padding: const EdgeInsets.only(bottom: 4),
@@ -1347,7 +1347,7 @@ class _ClientesAdminList extends StatelessWidget {
                                   Expanded(
                                     child: Text(
                                       '${pr.productoNombre} • ${pr.presentacionDesc}',
-                                      style: TextStyle(fontSize: 11, color: colors.text.withValues(alpha: 0.6)),
+                                      style: TextStyle(fontSize: 11, color: colors.textSecondary),
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
@@ -1360,7 +1360,7 @@ class _ClientesAdminList extends StatelessWidget {
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           Text('\$${pr.precioLista.toStringAsFixed(2)}',
-                                              style: TextStyle(fontSize: 11, color: colors.text.withValues(alpha: 0.35), decoration: TextDecoration.lineThrough)),
+                                              style: TextStyle(fontSize: 11, color: colors.textSecondary, decoration: TextDecoration.lineThrough)),
                                           const SizedBox(width: 6),
                                           Text('\$${pr.precioEspecial.toStringAsFixed(2)}',
                                               style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.primary)),
@@ -1379,7 +1379,7 @@ class _ClientesAdminList extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
                     child: Text('Sin precios especiales — toca para configurar',
-                        style: TextStyle(fontSize: 11, color: colors.text.withValues(alpha: 0.3))),
+                        style: TextStyle(fontSize: 11, color: colors.textSecondary)),
                   ),
               ],
             ),
@@ -1397,7 +1397,7 @@ class _ClientesAdminList extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text('¿Eliminar cliente?', style: TextStyle(color: colors.text, fontWeight: FontWeight.bold)),
         content: Text('Se eliminarán todos sus precios especiales. Esta acción no se puede deshacer.',
-            style: TextStyle(color: colors.text.withValues(alpha: 0.6))),
+            style: TextStyle(color: colors.textSecondary)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Cancelar', style: TextStyle(color: colors.text))),
           TextButton(
@@ -1435,7 +1435,7 @@ class _ActionMenu extends StatelessWidget {
     return PopupMenuButton<int>(
       color: colors.background,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      icon: Icon(Icons.more_vert, color: colors.text.withValues(alpha: 0.5), size: 20),
+      icon: Icon(Icons.more_vert, color: colors.textSecondary, size: 20),
       onSelected: (i) => items[i].onTap(),
       itemBuilder: (_) => List.generate(
         items.length,
@@ -1485,9 +1485,13 @@ class _KpiCard extends StatelessWidget {
         children: [
           Icon(icon, size: 20, color: highlight ? Colors.white70 : colors.primary),
           const SizedBox(height: 10),
-          Text(value, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: highlight ? Colors.white : colors.text), overflow: TextOverflow.ellipsis),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(value, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: highlight ? Colors.white : colors.text)),
+          ),
           const SizedBox(height: 4),
-          Text(label, style: TextStyle(fontSize: 10, color: highlight ? Colors.white60 : colors.text.withValues(alpha: 0.45))),
+          Text(label, style: TextStyle(fontSize: 10, color: highlight ? Colors.white60 : colors.textSecondary)),
         ],
       ),
     );

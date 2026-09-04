@@ -514,12 +514,12 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
 
   Widget _sectionLabel(String text, NeumorphicColors colors) => Text(
         text,
-        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: colors.text.withValues(alpha: 0.45), letterSpacing: 0.5),
+        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: colors.textSecondary, letterSpacing: 0.5),
       );
 
   Widget _fieldLabel(String text, NeumorphicColors colors) => Text(
         text,
-        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: colors.text.withValues(alpha: 0.45), letterSpacing: 0.4),
+        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: colors.textSecondary, letterSpacing: 0.4),
       );
 
   Widget _textFormField({
@@ -542,7 +542,7 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
         decoration: InputDecoration(
           border: InputBorder.none,
           hintText: hint,
-          hintStyle: TextStyle(color: colors.text.withValues(alpha: 0.3)),
+          hintStyle: TextStyle(color: colors.textSecondary),
           contentPadding: const EdgeInsets.symmetric(vertical: 12),
         ),
       ),
@@ -693,7 +693,7 @@ class _PresentacionFormTileState extends State<_PresentacionFormTile> {
 
   Widget _lbl(String text, NeumorphicColors colors) => Text(
         text,
-        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: colors.text.withValues(alpha: 0.45)),
+        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: colors.textSecondary),
       );
 
   Widget _inlineField(String label, TextEditingController ctrl, NeumorphicColors colors,
@@ -719,7 +719,7 @@ class _PresentacionFormTileState extends State<_PresentacionFormTile> {
             decoration: InputDecoration(
               border: InputBorder.none,
               hintText: hint,
-              hintStyle: TextStyle(color: colors.text.withValues(alpha: 0.3), fontSize: 13),
+              hintStyle: TextStyle(color: colors.textSecondary, fontSize: 13),
               contentPadding: const EdgeInsets.symmetric(vertical: 10),
               isDense: true,
             ),
@@ -814,13 +814,13 @@ class _AutocompleteFieldState extends State<_AutocompleteField> {
                   decoration: InputDecoration(
                     border: InputBorder.none,
                     hintText: widget.hint,
-                    hintStyle: TextStyle(color: widget.colors.text.withValues(alpha: 0.3), fontSize: widget.compact ? 12 : 14),
+                    hintStyle: TextStyle(color: widget.colors.textSecondary, fontSize: widget.compact ? 12 : 14),
                     contentPadding: EdgeInsets.symmetric(vertical: h),
                     isDense: widget.compact,
                   ),
                 ),
               ),
-              Icon(Icons.expand_more_rounded, size: 18, color: widget.colors.text.withValues(alpha: 0.35)),
+              Icon(Icons.expand_more_rounded, size: 18, color: widget.colors.textSecondary),
             ],
           ),
         );
@@ -861,7 +861,7 @@ class _AutocompleteFieldState extends State<_AutocompleteField> {
                           Icon(
                             isCreate ? Icons.add_circle_outline : Icons.label_outline,
                             size: 15,
-                            color: isCreate ? widget.colors.primary : widget.colors.text.withValues(alpha: 0.35),
+                            color: isCreate ? widget.colors.primary : widget.colors.textSecondary,
                           ),
                           const SizedBox(width: 10),
                           Expanded(
@@ -975,7 +975,7 @@ class _ProductoRestockSheetState extends State<ProductoRestockSheet> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('Reabastecer', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colors.text)),
-                    Text(widget.producto.nombre, style: TextStyle(fontSize: 12, color: colors.text.withValues(alpha: 0.5))),
+                    Text(widget.producto.nombre, style: TextStyle(fontSize: 12, color: colors.textSecondary)),
                   ],
                 ),
               ),
@@ -995,8 +995,17 @@ class _ProductoRestockSheetState extends State<ProductoRestockSheet> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(pr.descripcion, style: TextStyle(fontWeight: FontWeight.bold, color: colors.text)),
-                        Text('Stock actual: ${pr.stock}',
-                            style: TextStyle(fontSize: 11, color: pr.enAlerta ? colors.secondary : colors.text.withValues(alpha: 0.45))),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (pr.enAlerta) ...[
+                              Icon(Icons.warning_amber_rounded, size: 12, color: colors.secondary),
+                              const SizedBox(width: 4),
+                            ],
+                            Text('Stock actual: ${pr.stock}',
+                                style: TextStyle(fontSize: 11, color: pr.enAlerta ? colors.secondary : colors.textSecondary)),
+                          ],
+                        ),
                       ],
                     ),
                   ),
