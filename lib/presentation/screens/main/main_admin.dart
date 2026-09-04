@@ -315,7 +315,7 @@ class _DashboardAdminScreenState extends State<_DashboardAdminScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colors = isDark ? NeumorphicColors.dark : NeumorphicColors.light;
     final productos = context.watch<AdminProvider>().productos;
-    final alertasProductos = productos.where((p) => p.tieneAlerta).toList();
+    final alertasProductos = productos.where((p) => p.tieneAlerta || p.tieneAlertaAlmacen).toList();
 
     final ventasHoy = (_dashboard?['ventasHoy'] as num?)?.toInt() ?? 0;
     final totalHoy = (_dashboard?['totalHoy'] as num?)?.toDouble() ?? 0;
@@ -1043,6 +1043,23 @@ class _VentaResumenTileState extends State<_VentaResumenTile> {
 //  TAB 3 — TIENDA (Productos + Clientes)
 // ════════════════════════════════════════════════════════════════
 
+// Compara por coincidencia sin importar mayúsculas/minúsculas ni acentos —
+// "alfalfa" debe encontrar "Alfalfa Achicalada" igual que "alfálfa".
+String _normalizeSearch(String s) {
+  var r = s.toLowerCase();
+  const from = 'áàäâãéèëêíìïîóòöôõúùüûñ';
+  const to = 'aaaaaeeeeiiiioooooouuuun';
+  for (var i = 0; i < from.length; i++) {
+    r = r.replaceAll(from[i], to[i]);
+  }
+  return r;
+}
+
+bool _matchesSearch(String text, String query) {
+  if (query.trim().isEmpty) return true;
+  return _normalizeSearch(text).contains(_normalizeSearch(query));
+}
+
 class _TiendaAdminScreen extends StatefulWidget {
   const _TiendaAdminScreen();
   @override
@@ -1051,6 +1068,8 @@ class _TiendaAdminScreen extends StatefulWidget {
 
 class _TiendaAdminScreenState extends State<_TiendaAdminScreen> with SingleTickerProviderStateMixin {
   late final TabController _tabController;
+  final TextEditingController _searchCtrl = TextEditingController();
+  String _query = '';
 
   @override
   void initState() {
@@ -1062,6 +1081,7 @@ class _TiendaAdminScreenState extends State<_TiendaAdminScreen> with SingleTicke
   @override
   void dispose() {
     _tabController.dispose();
+    _searchCtrl.dispose();
     super.dispose();
   }
 
@@ -1114,14 +1134,44 @@ class _TiendaAdminScreenState extends State<_TiendaAdminScreen> with SingleTicke
               tabs: const [Tab(text: 'Productos'), Tab(text: 'Clientes'), Tab(text: 'Almacén')],
             ),
           ),
+          const SizedBox(height: 12),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Container(
+              decoration: NeumorphicStyle.inset(colors, radius: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              child: TextField(
+                controller: _searchCtrl,
+                onChanged: (v) => setState(() => _query = v),
+                style: TextStyle(color: colors.text, fontSize: 14),
+                decoration: InputDecoration(
+                  border: InputBorder.none,
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                  hintText: 'Buscar...',
+                  hintStyle: TextStyle(color: colors.textSecondary, fontSize: 14),
+                  icon: Icon(Icons.search, color: colors.textSecondary, size: 20),
+                  suffixIcon: _query.isEmpty
+                      ? null
+                      : IconButton(
+                          icon: Icon(Icons.close, color: colors.textSecondary, size: 18),
+                          onPressed: () => setState(() {
+                            _searchCtrl.clear();
+                            _query = '';
+                          }),
+                        ),
+                ),
+              ),
+            ),
+          ),
           const SizedBox(height: 4),
           Expanded(
             child: TabBarView(
               controller: _tabController,
               children: [
-                _ProductosAdminList(colors: colors),
-                _ClientesAdminList(colors: colors),
-                _AlmacenAdminList(colors: colors),
+                _ProductosAdminList(colors: colors, query: _query),
+                _ClientesAdminList(colors: colors, query: _query),
+                _AlmacenAdminList(colors: colors, query: _query),
               ],
             ),
           ),
@@ -1135,11 +1185,20 @@ class _TiendaAdminScreenState extends State<_TiendaAdminScreen> with SingleTicke
 
 class _ProductosAdminList extends StatelessWidget {
   final NeumorphicColors colors;
-  const _ProductosAdminList({required this.colors});
+  final String query;
+  const _ProductosAdminList({required this.colors, this.query = ''});
 
   @override
   Widget build(BuildContext context) {
-    final productos = context.watch<AdminProvider>().productos;
+    final productos = context.watch<AdminProvider>().productos
+        .where((p) => _matchesSearch(p.nombre, query))
+        .toList();
+
+    if (productos.isEmpty) {
+      return Center(
+        child: Text('Sin resultados', style: TextStyle(color: colors.textSecondary, fontSize: 13)),
+      );
+    }
 
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 120),
@@ -1272,11 +1331,20 @@ class _ProductosAdminList extends StatelessWidget {
 
 class _ClientesAdminList extends StatelessWidget {
   final NeumorphicColors colors;
-  const _ClientesAdminList({required this.colors});
+  final String query;
+  const _ClientesAdminList({required this.colors, this.query = ''});
 
   @override
   Widget build(BuildContext context) {
-    final clientes = context.watch<AdminProvider>().clientes;
+    final clientes = context.watch<AdminProvider>().clientes
+        .where((c) => _matchesSearch(c.nombre, query) || _matchesSearch(c.telefono, query))
+        .toList();
+
+    if (clientes.isEmpty) {
+      return Center(
+        child: Text('Sin resultados', style: TextStyle(color: colors.textSecondary, fontSize: 13)),
+      );
+    }
 
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 120),
@@ -1426,15 +1494,18 @@ class _ClientesAdminList extends StatelessWidget {
 
 class _AlmacenAdminList extends StatelessWidget {
   final NeumorphicColors colors;
-  const _AlmacenAdminList({required this.colors});
+  final String query;
+  const _AlmacenAdminList({required this.colors, this.query = ''});
 
   @override
   Widget build(BuildContext context) {
-    final productos = context.watch<AdminProvider>().productos;
+    final productos = context.watch<AdminProvider>().productos
+        .where((p) => _matchesSearch(p.nombre, query))
+        .toList();
 
     if (productos.isEmpty) {
       return Center(
-        child: Text('Sin productos', style: TextStyle(color: colors.textSecondary, fontSize: 13)),
+        child: Text('Sin resultados', style: TextStyle(color: colors.textSecondary, fontSize: 13)),
       );
     }
 
@@ -1473,9 +1544,21 @@ class _AlmacenAdminList extends StatelessWidget {
                           children: [
                             Text(pr.descripcion, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: colors.text)),
                             const SizedBox(height: 2),
-                            Text(
-                              'Almacén: ${pr.stockAlmacen}  ·  Tienda: ${pr.stock}',
-                              style: TextStyle(fontSize: 11, color: colors.textSecondary),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (pr.enAlertaAlmacen) ...[
+                                  Icon(Icons.warning_amber_rounded, size: 12, color: colors.secondary),
+                                  const SizedBox(width: 4),
+                                ],
+                                Text(
+                                  'Almacén: ${pr.stockAlmacen}  ·  Tienda: ${pr.stock}',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: pr.enAlertaAlmacen ? colors.secondary : colors.textSecondary,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
@@ -1696,7 +1779,12 @@ class _StockAlertTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final alertas = producto.presentaciones.where((p) => p.enAlerta).toList();
+    final detalles = <String>[
+      for (final p in producto.presentaciones) ...[
+        if (p.enAlerta) '${p.descripcion}: ${p.stock} uds. (tienda)',
+        if (p.enAlertaAlmacen) '${p.descripcion}: ${p.stockAlmacen} uds. (almacén)',
+      ],
+    ];
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
@@ -1718,7 +1806,7 @@ class _StockAlertTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(producto.nombre, style: TextStyle(fontWeight: FontWeight.bold, color: colors.text, fontSize: 13)),
-                Text(alertas.map((p) => '${p.descripcion}: ${p.stock} uds.').join(' · '), style: TextStyle(fontSize: 11, color: colors.secondary)),
+                Text(detalles.join(' · '), style: TextStyle(fontSize: 11, color: colors.secondary)),
               ],
             ),
           ),

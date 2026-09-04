@@ -15,6 +15,7 @@ class PresentacionAdmin {
   int stock;
   int stockAlmacen; // stock guardado en almacén, se mueve a `stock` (tienda) con transferStock
   int stockMinimo;
+  int stockMinimoAlmacen;
 
   PresentacionAdmin({
     required this.id,
@@ -25,6 +26,7 @@ class PresentacionAdmin {
     required this.stock,
     this.stockAlmacen = 0,
     required this.stockMinimo,
+    this.stockMinimoAlmacen = 5,
   });
 
   String get descripcion {
@@ -33,6 +35,7 @@ class PresentacionAdmin {
   }
 
   bool get enAlerta => stock <= stockMinimo;
+  bool get enAlertaAlmacen => stockAlmacen <= stockMinimoAlmacen;
 
   factory PresentacionAdmin.fromJson(Map<String, dynamic> j) => PresentacionAdmin(
     id: j['id'] as int,
@@ -43,6 +46,7 @@ class PresentacionAdmin {
     stock: j['stock'] as int,
     stockAlmacen: j['stockAlmacen'] as int? ?? 0,
     stockMinimo: j['stockMinimo'] as int,
+    stockMinimoAlmacen: j['stockMinimoAlmacen'] as int? ?? 5,
   );
 
   Map<String, dynamic> toJson() => {
@@ -53,6 +57,7 @@ class PresentacionAdmin {
     'stock': stock,
     'stockAlmacen': stockAlmacen,
     'stockMinimo': stockMinimo,
+    'stockMinimoAlmacen': stockMinimoAlmacen,
   };
 }
 
@@ -79,6 +84,7 @@ class ProductoAdmin {
 
   int get stockTotal => presentaciones.fold(0, (s, p) => s + p.stock);
   bool get tieneAlerta => presentaciones.any((p) => p.enAlerta);
+  bool get tieneAlertaAlmacen => presentaciones.any((p) => p.enAlertaAlmacen);
   String get stockStatus {
     if (presentaciones.isEmpty) return 'ok';
     if (presentaciones.every((p) => p.enAlerta)) return 'critico';
@@ -404,6 +410,7 @@ class AdminProvider extends ChangeNotifier {
         // este endpoint — se conserva el valor local actual.
         stockAlmacen: p.presentaciones[idx].stockAlmacen,
         stockMinimo: data.stockMinimo,
+        stockMinimoAlmacen: data.stockMinimoAlmacen,
       );
       notifyListeners();
     }

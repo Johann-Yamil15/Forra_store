@@ -18,6 +18,7 @@ class _PresForm {
   final TextEditingController precioCosto;
   final TextEditingController stock;
   final TextEditingController stockMinimo;
+  final TextEditingController stockMinimoAlmacen;
 
   _PresForm({
     required this.id,
@@ -27,6 +28,7 @@ class _PresForm {
     required this.precioCosto,
     required this.stock,
     required this.stockMinimo,
+    required this.stockMinimoAlmacen,
   });
 
   factory _PresForm.empty() => _PresForm(
@@ -37,6 +39,7 @@ class _PresForm {
         precioCosto: TextEditingController(),
         stock: TextEditingController(text: '0'),
         stockMinimo: TextEditingController(text: '5'),
+        stockMinimoAlmacen: TextEditingController(text: '5'),
       );
 
   factory _PresForm.fromExisting(PresentacionAdmin p) => _PresForm(
@@ -47,6 +50,7 @@ class _PresForm {
         precioCosto: TextEditingController(text: p.precioCosto?.toStringAsFixed(2) ?? ''),
         stock: TextEditingController(text: p.stock.toString()),
         stockMinimo: TextEditingController(text: p.stockMinimo.toString()),
+        stockMinimoAlmacen: TextEditingController(text: p.stockMinimoAlmacen.toString()),
       );
 
   void dispose() {
@@ -55,6 +59,7 @@ class _PresForm {
     precioCosto.dispose();
     stock.dispose();
     stockMinimo.dispose();
+    stockMinimoAlmacen.dispose();
   }
 }
 
@@ -187,6 +192,7 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
         precioCosto: f.precioCosto.text.trim().isEmpty ? null : double.tryParse(f.precioCosto.text),
         stock: int.tryParse(f.stock.text) ?? 0,
         stockMinimo: int.tryParse(f.stockMinimo.text) ?? 0,
+        stockMinimoAlmacen: int.tryParse(f.stockMinimoAlmacen.text) ?? 0,
       );
     }).toList();
 
@@ -684,6 +690,17 @@ class _PresentacionFormTileState extends State<_PresentacionFormTile> {
               Expanded(child: _inlineField('Stock', widget.form.stock, colors, hint: '0', num: true, isInt: true)),
               const SizedBox(width: 10),
               Expanded(child: _inlineField('Stock mín.', widget.form.stockMinimo, colors, hint: '5', num: true, isInt: true)),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: _inlineField('Stock mín. almacén', widget.form.stockMinimoAlmacen, colors,
+                    hint: '5', num: true, isInt: true),
+              ),
+              const SizedBox(width: 10),
+              const Expanded(child: SizedBox()),
             ],
           ),
         ],
