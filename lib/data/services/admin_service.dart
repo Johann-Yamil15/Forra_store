@@ -56,6 +56,21 @@ class AdminService {
     return (data as Map<String, dynamic>)['stockActual'] as int;
   }
 
+  static Future<int> addStockAlmacen(int idPresentacion, int cantidad) async {
+    final data = await ApiClient.patch(
+      '/api/admin/presentaciones/$idPresentacion/stock-almacen',
+      {'cantidad': cantidad},
+    );
+    return (data as Map<String, dynamic>)['stockAlmacenActual'] as int;
+  }
+
+  static Future<void> moverAlmacenATienda(int idPresentacion, int cantidad) async {
+    await ApiClient.post(
+      '/api/admin/presentaciones/$idPresentacion/mover-a-tienda',
+      {'cantidad': cantidad},
+    );
+  }
+
   // ── Clientes ────────────────────────────────────────────────────────────────
 
   static Future<List<Map<String, dynamic>>> getClientes() async {

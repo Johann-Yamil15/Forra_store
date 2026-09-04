@@ -1055,7 +1055,7 @@ class _TiendaAdminScreenState extends State<_TiendaAdminScreen> with SingleTicke
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(() => setState(() {}));
   }
 
@@ -1069,25 +1069,29 @@ class _TiendaAdminScreenState extends State<_TiendaAdminScreen> with SingleTicke
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colors = isDark ? NeumorphicColors.dark : NeumorphicColors.light;
-    final isProductos = _tabController.index == 0;
+    final tabIndex = _tabController.index;
 
     return Scaffold(
       backgroundColor: colors.background,
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          if (isProductos) {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const ProductoFormScreen()));
-          } else {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const ClienteFormScreen()));
-          }
-        },
-        backgroundColor: colors.primary,
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: Text(
-          isProductos ? 'Nuevo Producto' : 'Nuevo Cliente',
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-      ),
+      // Almacén no tiene "nuevo": ahí se opera sobre las presentaciones que
+      // ya existen (agregar / mover a tienda), no se crean productos nuevos.
+      floatingActionButton: tabIndex == 2
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: () {
+                if (tabIndex == 0) {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const ProductoFormScreen()));
+                } else {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const ClienteFormScreen()));
+                }
+              },
+              backgroundColor: colors.primary,
+              icon: const Icon(Icons.add, color: Colors.white),
+              label: Text(
+                tabIndex == 0 ? 'Nuevo Producto' : 'Nuevo Cliente',
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+            ),
       body: Column(
         children: [
           // Tab bar
@@ -1107,7 +1111,7 @@ class _TiendaAdminScreenState extends State<_TiendaAdminScreen> with SingleTicke
               unselectedLabelColor: colors.textSecondary,
               labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
               dividerColor: Colors.transparent,
-              tabs: const [Tab(text: 'Productos'), Tab(text: 'Clientes')],
+              tabs: const [Tab(text: 'Productos'), Tab(text: 'Clientes'), Tab(text: 'Almacén')],
             ),
           ),
           const SizedBox(height: 4),
@@ -1117,6 +1121,7 @@ class _TiendaAdminScreenState extends State<_TiendaAdminScreen> with SingleTicke
               children: [
                 _ProductosAdminList(colors: colors),
                 _ClientesAdminList(colors: colors),
+                _AlmacenAdminList(colors: colors),
               ],
             ),
           ),
@@ -1406,6 +1411,192 @@ class _ClientesAdminList extends StatelessWidget {
               Navigator.pop(ctx);
             },
             child: Text('Eliminar', style: TextStyle(color: colors.secondary, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Almacén ──────────────────────────────────────────────────
+// Stock guardado en bodega, separado del de tienda. Desde acá se agrega lo
+// que trae el proveedor al almacén, o se mueve a tienda cuando se surte el
+// aparador — cuando el proveedor entrega directo en tienda, eso se maneja
+// con "Reabastecer" en la pestaña Productos, sin pasar por aquí.
+
+class _AlmacenAdminList extends StatelessWidget {
+  final NeumorphicColors colors;
+  const _AlmacenAdminList({required this.colors});
+
+  @override
+  Widget build(BuildContext context) {
+    final productos = context.watch<AdminProvider>().productos;
+
+    if (productos.isEmpty) {
+      return Center(
+        child: Text('Sin productos', style: TextStyle(color: colors.textSecondary, fontSize: 13)),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
+      itemCount: productos.length,
+      itemBuilder: (context, i) {
+        final p = productos[i];
+        return Container(
+          margin: const EdgeInsets.only(bottom: 14),
+          padding: const EdgeInsets.all(16),
+          decoration: NeumorphicStyle.elevated(colors, radius: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(color: colors.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
+                    child: Icon(Icons.warehouse_outlined, color: colors.primary, size: 18),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(child: Text(p.nombre, style: TextStyle(fontWeight: FontWeight.bold, color: colors.text))),
+                ],
+              ),
+              const SizedBox(height: 12),
+              ...p.presentaciones.map((pr) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(pr.descripcion, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: colors.text)),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Almacén: ${pr.stockAlmacen}  ·  Tienda: ${pr.stock}',
+                              style: TextStyle(fontSize: 11, color: colors.textSecondary),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'Agregar a almacén',
+                        icon: Icon(Icons.add_circle_outline, color: colors.primary, size: 22),
+                        onPressed: () => _showAgregarDialog(context, p, pr),
+                      ),
+                      IconButton(
+                        tooltip: 'Mover a tienda',
+                        icon: Icon(Icons.arrow_circle_right_outlined, color: colors.primary, size: 22),
+                        onPressed: pr.stockAlmacen > 0 ? () => _showMoverDialog(context, p, pr) : null,
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showAgregarDialog(BuildContext context, ProductoAdmin p, PresentacionAdmin pr) {
+    final ctrl = TextEditingController(text: '0');
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: colors.background,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text('Agregar a almacén', style: TextStyle(color: colors.text, fontWeight: FontWeight.bold, fontSize: 16)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(pr.descripcion, style: TextStyle(color: colors.textSecondary, fontSize: 13)),
+            const SizedBox(height: 12),
+            TextField(
+              controller: ctrl,
+              autofocus: true,
+              textAlign: TextAlign.center,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              style: TextStyle(fontWeight: FontWeight.bold, color: colors.text, fontSize: 20),
+              decoration: InputDecoration(
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                hintText: 'Cantidad',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Cancelar', style: TextStyle(color: colors.text))),
+          TextButton(
+            onPressed: () {
+              final cantidad = int.tryParse(ctrl.text) ?? 0;
+              Navigator.pop(ctx);
+              if (cantidad > 0) {
+                context.read<AdminProvider>().addStockAlmacen(p.id, pr.id, cantidad);
+              }
+            },
+            child: Text('Agregar', style: TextStyle(color: colors.primary, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showMoverDialog(BuildContext context, ProductoAdmin p, PresentacionAdmin pr) {
+    final ctrl = TextEditingController(text: '0');
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: colors.background,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text('Mover a tienda', style: TextStyle(color: colors.text, fontWeight: FontWeight.bold, fontSize: 16)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(pr.descripcion, style: TextStyle(color: colors.textSecondary, fontSize: 13)),
+            const SizedBox(height: 4),
+            Text('Disponible en almacén: ${pr.stockAlmacen}', style: TextStyle(color: colors.textSecondary, fontSize: 12)),
+            const SizedBox(height: 12),
+            TextField(
+              controller: ctrl,
+              autofocus: true,
+              textAlign: TextAlign.center,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              style: TextStyle(fontWeight: FontWeight.bold, color: colors.text, fontSize: 20),
+              decoration: InputDecoration(
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                hintText: 'Cantidad a mover',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Cancelar', style: TextStyle(color: colors.text))),
+          TextButton(
+            onPressed: () async {
+              final cantidad = int.tryParse(ctrl.text) ?? 0;
+              if (cantidad <= 0) return;
+              if (cantidad > pr.stockAlmacen) {
+                ScaffoldMessenger.of(ctx).showSnackBar(
+                  const SnackBar(content: Text('No hay suficiente stock en almacén')),
+                );
+                return;
+              }
+              Navigator.pop(ctx);
+              final messenger = ScaffoldMessenger.of(context);
+              try {
+                await context.read<AdminProvider>().moverAlmacenATienda(p.id, pr.id, cantidad);
+              } catch (e) {
+                messenger.showSnackBar(SnackBar(content: Text('No se pudo mover: $e')));
+              }
+            },
+            child: Text('Mover', style: TextStyle(color: colors.primary, fontWeight: FontWeight.bold)),
           ),
         ],
       ),

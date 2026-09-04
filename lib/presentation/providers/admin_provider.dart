@@ -13,6 +13,7 @@ class PresentacionAdmin {
   double precio;
   double? precioCosto; // precio de proveedor — usado en reportes para calcular ganancia
   int stock;
+  int stockAlmacen; // stock guardado en almacén, se mueve a `stock` (tienda) con transferStock
   int stockMinimo;
 
   PresentacionAdmin({
@@ -22,6 +23,7 @@ class PresentacionAdmin {
     required this.precio,
     this.precioCosto,
     required this.stock,
+    this.stockAlmacen = 0,
     required this.stockMinimo,
   });
 
@@ -39,6 +41,7 @@ class PresentacionAdmin {
     precio: (j['precio'] as num).toDouble(),
     precioCosto: (j['precioCosto'] as num?)?.toDouble(),
     stock: j['stock'] as int,
+    stockAlmacen: j['stockAlmacen'] as int? ?? 0,
     stockMinimo: j['stockMinimo'] as int,
   );
 
@@ -48,6 +51,7 @@ class PresentacionAdmin {
     'precio': precio,
     'precioCosto': precioCosto,
     'stock': stock,
+    'stockAlmacen': stockAlmacen,
     'stockMinimo': stockMinimo,
   };
 }
@@ -352,6 +356,32 @@ class AdminProvider extends ChangeNotifier {
     await AdminService.addStock(idPresentacion, cantidad);
   }
 
+  Future<void> addStockAlmacen(int idProducto, int idPresentacion, int cantidad) async {
+    final p = _findProducto(idProducto);
+    if (p == null) return;
+    final idx = p.presentaciones.indexWhere((pr) => pr.id == idPresentacion);
+    if (idx >= 0) {
+      p.presentaciones[idx].stockAlmacen += cantidad;
+      notifyListeners();
+    }
+    await AdminService.addStockAlmacen(idPresentacion, cantidad);
+  }
+
+  /// Mueve cantidad de almacén a tienda. Lanza [ApiException] si no hay
+  /// suficiente stock en almacén — el estado local no se toca hasta que el
+  /// servidor confirma, para no desincronizarse si falla.
+  Future<void> moverAlmacenATienda(int idProducto, int idPresentacion, int cantidad) async {
+    await AdminService.moverAlmacenATienda(idPresentacion, cantidad);
+    final p = _findProducto(idProducto);
+    if (p == null) return;
+    final idx = p.presentaciones.indexWhere((pr) => pr.id == idPresentacion);
+    if (idx >= 0) {
+      p.presentaciones[idx].stockAlmacen -= cantidad;
+      p.presentaciones[idx].stock += cantidad;
+      notifyListeners();
+    }
+  }
+
   Future<void> addPresentacion(int idProducto, PresentacionAdmin pr) async {
     await AdminService.addPresentacion(idProducto, pr.toJson());
     await init();
@@ -369,6 +399,10 @@ class AdminProvider extends ChangeNotifier {
         precio: data.precio,
         precioCosto: data.precioCosto,
         stock: data.stock,
+        // No se toma de `data`: el formulario general de edición no lo
+        // rastrea (siempre llegaría en 0) y el backend tampoco lo toca en
+        // este endpoint — se conserva el valor local actual.
+        stockAlmacen: p.presentaciones[idx].stockAlmacen,
         stockMinimo: data.stockMinimo,
       );
       notifyListeners();
