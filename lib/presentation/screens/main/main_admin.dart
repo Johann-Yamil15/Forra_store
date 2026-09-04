@@ -1535,7 +1535,7 @@ class _AlmacenAdminList extends StatelessWidget {
               const SizedBox(height: 12),
               ...p.presentaciones.map((pr) {
                 return Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.only(bottom: 4),
                   child: Row(
                     children: [
                       Expanded(
@@ -1544,34 +1544,45 @@ class _AlmacenAdminList extends StatelessWidget {
                           children: [
                             Text(pr.descripcion, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: colors.text)),
                             const SizedBox(height: 2),
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                if (pr.enAlertaAlmacen) ...[
-                                  Icon(Icons.warning_amber_rounded, size: 12, color: colors.secondary),
-                                  const SizedBox(width: 4),
-                                ],
-                                Text(
-                                  'Almacén: ${pr.stockAlmacen}  ·  Tienda: ${pr.stock}',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: pr.enAlertaAlmacen ? colors.secondary : colors.textSecondary,
+                            if (!pr.usaAlmacen)
+                              Text('No usa almacén', style: TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: colors.textSecondary))
+                            else
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (pr.enAlertaAlmacen) ...[
+                                    Icon(Icons.warning_amber_rounded, size: 12, color: colors.secondary),
+                                    const SizedBox(width: 4),
+                                  ],
+                                  Text(
+                                    'Almacén: ${pr.stockAlmacen}  ·  Tienda: ${pr.stock}',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: pr.enAlertaAlmacen ? colors.secondary : colors.textSecondary,
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
+                                ],
+                              ),
                           ],
+                        ),
+                      ),
+                      Tooltip(
+                        message: pr.usaAlmacen ? 'Usa almacén' : 'No usa almacén',
+                        child: Switch(
+                          value: pr.usaAlmacen,
+                          activeColor: colors.primary,
+                          onChanged: (v) => context.read<AdminProvider>().toggleUsaAlmacen(p.id, pr.id, v),
                         ),
                       ),
                       IconButton(
                         tooltip: 'Agregar a almacén',
-                        icon: Icon(Icons.add_circle_outline, color: colors.primary, size: 22),
-                        onPressed: () => _showAgregarDialog(context, p, pr),
+                        icon: Icon(Icons.add_circle_outline, color: pr.usaAlmacen ? colors.primary : colors.textSecondary, size: 22),
+                        onPressed: pr.usaAlmacen ? () => _showAgregarDialog(context, p, pr) : null,
                       ),
                       IconButton(
                         tooltip: 'Mover a tienda',
-                        icon: Icon(Icons.arrow_circle_right_outlined, color: colors.primary, size: 22),
-                        onPressed: pr.stockAlmacen > 0 ? () => _showMoverDialog(context, p, pr) : null,
+                        icon: Icon(Icons.arrow_circle_right_outlined, color: pr.usaAlmacen ? colors.primary : colors.textSecondary, size: 22),
+                        onPressed: (pr.usaAlmacen && pr.stockAlmacen > 0) ? () => _showMoverDialog(context, p, pr) : null,
                       ),
                     ],
                   ),

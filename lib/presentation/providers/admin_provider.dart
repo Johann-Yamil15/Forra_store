@@ -16,6 +16,7 @@ class PresentacionAdmin {
   int stockAlmacen; // stock guardado en almacén, se mueve a `stock` (tienda) con transferStock
   int stockMinimo;
   int stockMinimoAlmacen;
+  bool usaAlmacen; // false = esta presentación siempre entrega directo en tienda, no se guarda en almacén
 
   PresentacionAdmin({
     required this.id,
@@ -27,6 +28,7 @@ class PresentacionAdmin {
     this.stockAlmacen = 0,
     required this.stockMinimo,
     this.stockMinimoAlmacen = 5,
+    this.usaAlmacen = false,
   });
 
   String get descripcion {
@@ -35,7 +37,7 @@ class PresentacionAdmin {
   }
 
   bool get enAlerta => stock <= stockMinimo;
-  bool get enAlertaAlmacen => stockAlmacen <= stockMinimoAlmacen;
+  bool get enAlertaAlmacen => usaAlmacen && stockAlmacen <= stockMinimoAlmacen;
 
   factory PresentacionAdmin.fromJson(Map<String, dynamic> j) => PresentacionAdmin(
     id: j['id'] as int,
@@ -47,6 +49,7 @@ class PresentacionAdmin {
     stockAlmacen: j['stockAlmacen'] as int? ?? 0,
     stockMinimo: j['stockMinimo'] as int,
     stockMinimoAlmacen: j['stockMinimoAlmacen'] as int? ?? 5,
+    usaAlmacen: j['usaAlmacen'] as bool? ?? false,
   );
 
   Map<String, dynamic> toJson() => {
@@ -388,6 +391,17 @@ class AdminProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> toggleUsaAlmacen(int idProducto, int idPresentacion, bool activo) async {
+    final p = _findProducto(idProducto);
+    if (p == null) return;
+    final idx = p.presentaciones.indexWhere((pr) => pr.id == idPresentacion);
+    if (idx >= 0) {
+      p.presentaciones[idx].usaAlmacen = activo;
+      notifyListeners();
+    }
+    await AdminService.cambiarUsaAlmacen(idPresentacion, activo);
+  }
+
   Future<void> addPresentacion(int idProducto, PresentacionAdmin pr) async {
     await AdminService.addPresentacion(idProducto, pr.toJson());
     await init();
@@ -411,6 +425,7 @@ class AdminProvider extends ChangeNotifier {
         stockAlmacen: p.presentaciones[idx].stockAlmacen,
         stockMinimo: data.stockMinimo,
         stockMinimoAlmacen: data.stockMinimoAlmacen,
+        usaAlmacen: p.presentaciones[idx].usaAlmacen,
       );
       notifyListeners();
     }

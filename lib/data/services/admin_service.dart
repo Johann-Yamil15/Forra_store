@@ -71,6 +71,13 @@ class AdminService {
     );
   }
 
+  static Future<void> cambiarUsaAlmacen(int idPresentacion, bool activo) async {
+    await ApiClient.patch(
+      '/api/admin/presentaciones/$idPresentacion/usa-almacen',
+      {'activo': activo},
+    );
+  }
+
   // ── Clientes ────────────────────────────────────────────────────────────────
 
   static Future<List<Map<String, dynamic>>> getClientes() async {
