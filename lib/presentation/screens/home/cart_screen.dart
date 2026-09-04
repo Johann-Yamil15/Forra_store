@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:forra_store/core/constants/api_constants.dart';
 import 'package:forra_store/core/utils/auth_provider.dart';
 import 'package:forra_store/presentation/providers/cart_provider.dart';
 import 'package:forra_store/core/theme/neumorphic_colors.dart';
@@ -311,31 +312,50 @@ class CartScreen extends StatelessWidget {
     CartProvider cartProvider,
     NeumorphicColors colors,
   ) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 20, 16, 10),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      decoration: NeumorphicStyle.elevated(colors, radius: 12),
-      child: ListTile(
-        contentPadding: EdgeInsets.zero,
-        leading: Icon(Icons.person_search_outlined, color: colors.primary),
-        title: Text(
-          cartProvider.selectedCliente?.nombre ?? 'Seleccionar Cliente',
-          style: TextStyle(
-            color:
-                cartProvider.selectedCliente != null
-                    ? colors.text
-                    : colors.textSecondary,
-            fontWeight:
-                cartProvider.selectedCliente != null
-                    ? FontWeight.bold
-                    : FontWeight.normal,
-          ),
+    final hasCliente = cartProvider.selectedCliente != null;
+    return GestureDetector(
+      onTap: () => _showCustomerPicker(context, cartProvider, colors),
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(16, 20, 16, 10),
+        padding: const EdgeInsets.all(12),
+        decoration: NeumorphicStyle.elevated(colors, radius: 14),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: colors.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                hasCliente ? Icons.person : Icons.person_search_outlined,
+                color: colors.primary,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    cartProvider.selectedCliente?.nombre ?? 'Seleccionar Cliente',
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: hasCliente ? colors.text : colors.textSecondary,
+                      fontWeight: hasCliente ? FontWeight.bold : FontWeight.w500,
+                    ),
+                  ),
+                  Text(
+                    hasCliente ? 'Precios especiales activos' : 'Venta con precio de lista',
+                    style: TextStyle(fontSize: 11, color: colors.textSecondary),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.keyboard_arrow_down, color: colors.textSecondary),
+          ],
         ),
-        trailing: Icon(
-          Icons.keyboard_arrow_down,
-          color: colors.textSecondary,
-        ),
-        onTap: () => _showCustomerPicker(context, cartProvider, colors),
       ),
     );
   }
@@ -480,16 +500,27 @@ class _CartItemTile extends StatelessWidget {
       decoration: NeumorphicStyle.elevated(colors),
       child: Row(
         children: [
-          // Imagen o Icono
+          // Imagen del producto (o ícono si no tiene / falla la carga)
           Container(
             width: 70,
             height: 70,
+            clipBehavior: Clip.antiAlias,
             decoration: NeumorphicStyle.inset(colors, radius: 12),
-            child: Icon(
-              Icons.inventory_2_outlined,
-              color: colors.primary,
-              size: 30,
-            ),
+            child: (item.imagenUrl?.isNotEmpty ?? false)
+                ? Image.network(
+                    ApiConstants.resolveImageUrl(item.imagenUrl!),
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Icon(
+                      Icons.inventory_2_outlined,
+                      color: colors.primary,
+                      size: 30,
+                    ),
+                  )
+                : Icon(
+                    Icons.inventory_2_outlined,
+                    color: colors.primary,
+                    size: 30,
+                  ),
           ),
           const SizedBox(width: 16),
           // Info del producto
@@ -543,42 +574,48 @@ class _CartItemTile extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 8),
-                Row(
-                  children: [
-                    _QuantityButton(
-                      icon: Icons.remove,
-                      colors: colors,
-                      onTap: () {
-                        HapticFeedback.lightImpact();
-                        context.read<CartProvider>().updateQuantity(
-                          item,
-                          item.cantidad - 1,
-                        );
-                      },
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Text(
-                        '${item.cantidad}',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: colors.text,
+                Container(
+                  decoration: NeumorphicStyle.inset(colors, radius: 20),
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _QuantityButton(
+                        icon: Icons.remove,
+                        colors: colors,
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          context.read<CartProvider>().updateQuantity(
+                            item,
+                            item.cantidad - 1,
+                          );
+                        },
+                      ),
+                      SizedBox(
+                        width: 32,
+                        child: Text(
+                          '${item.cantidad}',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: colors.text,
+                          ),
                         ),
                       ),
-                    ),
-                    _QuantityButton(
-                      icon: Icons.add,
-                      colors: colors,
-                      onTap: () {
-                        HapticFeedback.lightImpact();
-                        context.read<CartProvider>().updateQuantity(
-                          item,
-                          item.cantidad + 1,
-                        );
-                      },
-                    ),
-                  ],
+                      _QuantityButton(
+                        icon: Icons.add,
+                        colors: colors,
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          context.read<CartProvider>().updateQuantity(
+                            item,
+                            item.cantidad + 1,
+                          );
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
