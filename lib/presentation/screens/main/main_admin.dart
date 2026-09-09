@@ -1190,9 +1190,13 @@ class _ProductosAdminList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final productos = context.watch<AdminProvider>().productos
-        .where((p) => _matchesSearch(p.nombre, query))
-        .toList();
+    final filtrados = context.watch<AdminProvider>().productos
+        .where((p) => _matchesSearch(p.nombre, query));
+    // Activos primero, dados de baja hasta abajo (preserva el orden alfabético dentro de cada grupo).
+    final productos = [
+      ...filtrados.where((p) => p.activo),
+      ...filtrados.where((p) => !p.activo),
+    ];
 
     if (productos.isEmpty) {
       return Center(
