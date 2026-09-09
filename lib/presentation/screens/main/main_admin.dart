@@ -1205,13 +1205,17 @@ class _ProductosAdminList extends StatelessWidget {
       itemCount: productos.length,
       itemBuilder: (context, i) {
         final p = productos[i];
-        final statusColor = p.stockStatus == 'critico'
-            ? colors.secondary
-            : p.stockStatus == 'alerta'
-                ? Colors.orange
-                : colors.primary;
+        final statusColor = !p.activo
+            ? colors.textSecondary
+            : p.stockStatus == 'critico'
+                ? colors.secondary
+                : p.stockStatus == 'alerta'
+                    ? Colors.orange
+                    : colors.primary;
 
-        return Container(
+        return Opacity(
+          opacity: p.activo ? 1 : 0.6,
+          child: Container(
           margin: const EdgeInsets.only(bottom: 14),
           padding: const EdgeInsets.all(16),
           decoration: NeumorphicStyle.elevated(colors, radius: 16),
@@ -1230,7 +1234,22 @@ class _ProductosAdminList extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(p.nombre, style: TextStyle(fontWeight: FontWeight.bold, color: colors.text)),
+                        Row(
+                          children: [
+                            Flexible(child: Text(p.nombre, style: TextStyle(fontWeight: FontWeight.bold, color: colors.text), overflow: TextOverflow.ellipsis)),
+                            if (!p.activo) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: colors.textSecondary.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text('De baja', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: colors.textSecondary)),
+                              ),
+                            ],
+                          ],
+                        ),
                         Text(p.categoria, style: TextStyle(fontSize: 11, color: colors.textSecondary)),
                       ],
                     ),
@@ -1242,17 +1261,22 @@ class _ProductosAdminList extends StatelessWidget {
                       _MenuAction(icon: Icons.edit_outlined, label: 'Editar', onTap: () {
                         Navigator.push(context, MaterialPageRoute(builder: (_) => ProductoFormScreen(producto: p)));
                       }),
-                      _MenuAction(icon: Icons.add_box_outlined, label: 'Reabastecer', onTap: () {
-                        showModalBottomSheet(
-                          context: context,
-                          isScrollControlled: true,
-                          backgroundColor: Colors.transparent,
-                          builder: (_) => ProductoRestockSheet(producto: p),
-                        );
-                      }),
-                      _MenuAction(icon: Icons.delete_outline, label: 'Eliminar', isDestructive: true, onTap: () {
-                        _confirmDeleteProducto(context, p);
-                      }),
+                      if (p.activo) ...[
+                        _MenuAction(icon: Icons.add_box_outlined, label: 'Reabastecer', onTap: () {
+                          showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true,
+                            backgroundColor: Colors.transparent,
+                            builder: (_) => ProductoRestockSheet(producto: p),
+                          );
+                        }),
+                        _MenuAction(icon: Icons.visibility_off_outlined, label: 'Dar de baja', onTap: () {
+                          _confirmDarDeBajaProducto(context, p);
+                        }),
+                      ] else
+                        _MenuAction(icon: Icons.visibility_outlined, label: 'Reactivar', onTap: () {
+                          context.read<AdminProvider>().reactivarProducto(p.id);
+                        }),
                     ],
                   ),
                 ],
@@ -1298,28 +1322,30 @@ class _ProductosAdminList extends StatelessWidget {
               }),
             ],
           ),
+          ),
         );
       },
     );
   }
 
-  void _confirmDeleteProducto(BuildContext context, ProductoAdmin p) {
+  void _confirmDarDeBajaProducto(BuildContext context, ProductoAdmin p) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: colors.background,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('¿Eliminar producto?', style: TextStyle(color: colors.text, fontWeight: FontWeight.bold)),
-        content: Text('Se eliminará "${p.nombre}" y sus presentaciones. Esta acción no se puede deshacer.',
+        title: Text('¿Dar de baja este producto?', style: TextStyle(color: colors.text, fontWeight: FontWeight.bold)),
+        content: Text(
+            '"${p.nombre}" dejará de aparecer en el catálogo de venta, pero se conserva su historial de ventas. Puedes reactivarlo cuando quieras.',
             style: TextStyle(color: colors.textSecondary)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Cancelar', style: TextStyle(color: colors.text))),
           TextButton(
             onPressed: () {
-              context.read<AdminProvider>().deleteProducto(p.id);
+              context.read<AdminProvider>().darDeBajaProducto(p.id);
               Navigator.pop(ctx);
             },
-            child: Text('Eliminar', style: TextStyle(color: colors.secondary, fontWeight: FontWeight.bold)),
+            child: Text('Dar de baja', style: TextStyle(color: colors.primary, fontWeight: FontWeight.bold)),
           ),
         ],
       ),

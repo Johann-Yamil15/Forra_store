@@ -72,6 +72,7 @@ class ProductoAdmin {
   String subcategoria;
   String uso;
   String imagenUrl;
+  bool activo; // false = dado de baja: no aparece en el catálogo de venta, pero conserva su historial
   List<PresentacionAdmin> presentaciones;
 
   ProductoAdmin({
@@ -82,6 +83,7 @@ class ProductoAdmin {
     this.subcategoria = '',
     this.uso = '',
     this.imagenUrl = '',
+    this.activo = true,
     required this.presentaciones,
   });
 
@@ -103,6 +105,7 @@ class ProductoAdmin {
     subcategoria: j['subcategoria'] as String? ?? '',
     uso: j['uso'] as String? ?? '',
     imagenUrl: j['imagenUrl'] as String? ?? '',
+    activo: j['activo'] as bool? ?? true,
     presentaciones: (j['presentaciones'] as List? ?? [])
         .map((p) => PresentacionAdmin.fromJson(p as Map<String, dynamic>))
         .toList(),
@@ -345,13 +348,24 @@ class AdminProvider extends ChangeNotifier {
     });
   }
 
-  Future<void> deleteProducto(int id) async {
-    _productos.removeWhere((p) => p.id == id);
-    for (final c in _clientes) {
-      c.precios.removeWhere((pr) => pr.idProducto == id);
+  /// Da de baja el producto: deja de venderse pero conserva su historial de
+  /// ventas y se puede reactivar en cualquier momento.
+  Future<void> darDeBajaProducto(int id) async {
+    final p = _findProducto(id);
+    if (p != null) {
+      p.activo = false;
+      notifyListeners();
     }
-    notifyListeners();
-    await AdminService.deleteProducto(id);
+    await AdminService.darDeBajaProducto(id);
+  }
+
+  Future<void> reactivarProducto(int id) async {
+    final p = _findProducto(id);
+    if (p != null) {
+      p.activo = true;
+      notifyListeners();
+    }
+    await AdminService.reactivarProducto(id);
   }
 
   Future<void> addStock(int idProducto, int idPresentacion, int cantidad) async {

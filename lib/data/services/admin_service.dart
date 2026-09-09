@@ -20,8 +20,12 @@ class AdminService {
     await ApiClient.put('/api/admin/productos/$id', body);
   }
 
-  static Future<void> deleteProducto(int id) async {
+  static Future<void> darDeBajaProducto(int id) async {
     await ApiClient.delete('/api/admin/productos/$id');
+  }
+
+  static Future<void> reactivarProducto(int id) async {
+    await ApiClient.patch('/api/admin/productos/$id/reactivar', {});
   }
 
   // ── Presentaciones ──────────────────────────────────────────────────────────
