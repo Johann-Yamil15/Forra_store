@@ -379,15 +379,18 @@ class AdminProvider extends ChangeNotifier {
     await AdminService.addStock(idPresentacion, cantidad);
   }
 
+  /// [cantidad] puede ser negativa para corregir un exceso capturado por
+  /// error. Espera la confirmación del servidor (puede rechazar si el
+  /// resultado quedaría negativo) antes de reflejar el cambio localmente.
   Future<void> addStockAlmacen(int idProducto, int idPresentacion, int cantidad) async {
+    final nuevoStock = await AdminService.addStockAlmacen(idPresentacion, cantidad);
     final p = _findProducto(idProducto);
     if (p == null) return;
     final idx = p.presentaciones.indexWhere((pr) => pr.id == idPresentacion);
     if (idx >= 0) {
-      p.presentaciones[idx].stockAlmacen += cantidad;
+      p.presentaciones[idx].stockAlmacen = nuevoStock;
       notifyListeners();
     }
-    await AdminService.addStockAlmacen(idPresentacion, cantidad);
   }
 
   /// Mueve cantidad de almacén a tienda. Lanza [ApiException] si no hay

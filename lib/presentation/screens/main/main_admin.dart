@@ -1605,7 +1605,7 @@ class _AlmacenAdminList extends StatelessWidget {
                         ),
                       ),
                       IconButton(
-                        tooltip: 'Agregar a almacén',
+                        tooltip: 'Ajustar almacén',
                         icon: Icon(Icons.add_circle_outline, color: pr.usaAlmacen ? colors.primary : colors.textSecondary, size: 22),
                         onPressed: pr.usaAlmacen ? () => _showAgregarDialog(context, p, pr) : null,
                       ),
@@ -1632,38 +1632,47 @@ class _AlmacenAdminList extends StatelessWidget {
       builder: (ctx) => AlertDialog(
         backgroundColor: colors.background,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('Agregar a almacén', style: TextStyle(color: colors.text, fontWeight: FontWeight.bold, fontSize: 16)),
+        title: Text('Ajustar almacén', style: TextStyle(color: colors.text, fontWeight: FontWeight.bold, fontSize: 16)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(pr.descripcion, style: TextStyle(color: colors.textSecondary, fontSize: 13)),
+            const SizedBox(height: 4),
+            Text('En almacén: ${pr.stockAlmacen}', style: TextStyle(color: colors.textSecondary, fontSize: 12)),
             const SizedBox(height: 12),
             TextField(
               controller: ctrl,
               autofocus: true,
               textAlign: TextAlign.center,
-              keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              keyboardType: const TextInputType.numberWithOptions(signed: true),
+              inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^-?\d*$'))],
               style: TextStyle(fontWeight: FontWeight.bold, color: colors.text, fontSize: 20),
               decoration: InputDecoration(
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 hintText: 'Cantidad',
               ),
             ),
+            const SizedBox(height: 6),
+            Text('Usa un número negativo (ej. -5) para corregir un exceso.',
+                style: TextStyle(color: colors.textSecondary, fontSize: 11)),
           ],
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Cancelar', style: TextStyle(color: colors.text))),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               final cantidad = int.tryParse(ctrl.text) ?? 0;
+              if (cantidad == 0) return;
               Navigator.pop(ctx);
-              if (cantidad > 0) {
-                context.read<AdminProvider>().addStockAlmacen(p.id, pr.id, cantidad);
+              final messenger = ScaffoldMessenger.of(context);
+              try {
+                await context.read<AdminProvider>().addStockAlmacen(p.id, pr.id, cantidad);
+              } catch (e) {
+                messenger.showSnackBar(SnackBar(content: Text('No se pudo ajustar: $e')));
               }
             },
-            child: Text('Agregar', style: TextStyle(color: colors.primary, fontWeight: FontWeight.bold)),
+            child: Text('Aplicar', style: TextStyle(color: colors.primary, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
