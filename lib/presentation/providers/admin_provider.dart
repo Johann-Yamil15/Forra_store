@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:forra_store/data/services/admin_service.dart';
+import 'package:forra_store/data/services/api_client.dart';
 import 'package:forra_store/data/services/config_service.dart';
 
 // ─── Modelos ─────────────────────────────────────────────────────────────────
@@ -226,7 +227,7 @@ class AdminProvider extends ChangeNotifier {
         ..clear()
         ..addAll(rawClientes.map(ClienteAdmin.fromJson));
     } catch (e) {
-      error = e.toString();
+      error = friendlyApiError(e);
       debugPrint('AdminProvider.init error: $e');
     } finally {
       isLoading = false;

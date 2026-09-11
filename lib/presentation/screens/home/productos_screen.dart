@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:forra_store/data/models/producto_preview.dart';
+import 'package:forra_store/data/services/api_client.dart';
 import 'package:forra_store/data/services/producto_service.dart';
 import 'package:forra_store/presentation/screens/home/product_detail_screen.dart';
 import 'package:forra_store/presentation/widgets/product_grid_card.dart';
@@ -492,7 +493,7 @@ class _ProductosScreenState extends State<ProductosScreen>
       _animationController.forward();
     } catch (e) {
       if (!mounted) return;
-      setState(() { _isLoading = false; _errorMsg = e.toString(); });
+      setState(() { _isLoading = false; _errorMsg = friendlyApiError(e); });
     }
   }
 }

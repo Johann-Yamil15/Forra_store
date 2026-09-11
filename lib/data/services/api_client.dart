@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -10,6 +11,20 @@ class ApiException implements Exception {
   ApiException(this.message, {this.statusCode});
   @override
   String toString() => message;
+}
+
+/// Traduce excepciones técnicas (timeout, sin conexión) a un mensaje que un
+/// usuario final entienda. Railway duerme el servidor tras un rato inactivo
+/// y tarda unos segundos en despertar — sin esto, el usuario veía algo como
+/// "TimeoutException after 0:00:20.000000: Future not completed".
+String friendlyApiError(Object e) {
+  if (e is TimeoutException) {
+    return 'El servidor tardó en responder — puede estar despertando tras estar inactivo. Intenta de nuevo en unos segundos.';
+  }
+  if (e is SocketException) {
+    return 'No se pudo conectar con el servidor. Revisa tu conexión a internet.';
+  }
+  return e.toString();
 }
 
 class ApiClient {

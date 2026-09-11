@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:forra_store/core/utils/auth_provider.dart';
+import 'package:forra_store/data/services/api_client.dart';
 import 'package:forra_store/core/utils/validators.dart';
 import 'package:forra_store/presentation/screens/main/main_admin.dart';
 import 'package:forra_store/presentation/screens/main/main_trabajador.dart';
@@ -363,7 +364,7 @@ class _LoginScreenState extends State<LoginScreen>
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(e.toString()),
+          content: Text(friendlyApiError(e)),
           backgroundColor: Colors.red.shade600,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
