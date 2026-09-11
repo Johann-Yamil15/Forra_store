@@ -17,6 +17,8 @@ class ProfileScreen extends StatelessWidget {
     // Elegir colores según el tema
     final colors = isDark ? NeumorphicColors.dark : NeumorphicColors.light;
 
+    final authProvider = context.watch<AuthProvider>();
+
     return Scaffold(
       backgroundColor: colors.background,
       appBar: AppBar(
@@ -38,7 +40,7 @@ class ProfileScreen extends StatelessWidget {
       body: Column(
         children: [
           // Encabezado de Perfil
-          _buildProfileHeader(colors),
+          _buildProfileHeader(colors, authProvider),
 
           // Opciones del menú
           Expanded(child: _buildMenuOptions(context, colors)),
@@ -47,22 +49,32 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  /// Encabezado de Perfil con Avatar y Datos del Usuario
-  Widget _buildProfileHeader(NeumorphicColors colors) {
+  String _roleLabel(String? role) {
+    switch (role) {
+      case 'admin':
+        return 'Administrador';
+      case 'trabajador':
+        return 'Trabajador';
+      default:
+        return '';
+    }
+  }
+
+  /// Encabezado de Perfil: solo nombre de usuario y rol — sin foto ni correo,
+  /// que no aportan nada aquí y exponían un avatar/email falsos hardcodeados.
+  Widget _buildProfileHeader(NeumorphicColors colors, AuthProvider authProvider) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: NeumorphicStyle.elevated(colors),
       child: Row(
         children: [
-          // Avatar
+          // Avatar genérico (icono), sin foto de terceros
           Container(
             decoration: NeumorphicStyle.elevated(colors, radius: 30, depth: 4),
             child: CircleAvatar(
               radius: 30,
               backgroundColor: colors.secondary.withAlpha((0.2 * 255).round()),
-              backgroundImage: const NetworkImage(
-                'https://randomuser.me/api/portraits/men/41.jpg',
-              ),
+              child: Icon(Icons.person, color: colors.primary, size: 32),
             ),
           ),
           const SizedBox(width: 16),
@@ -73,7 +85,7 @@ class ProfileScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Usuario ForraControl',
+                  authProvider.username ?? 'Usuario',
                   style: GoogleFonts.nunitoSans(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -82,7 +94,7 @@ class ProfileScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'correo@ejemplo.com',
+                  _roleLabel(authProvider.role),
                   style: GoogleFonts.nunitoSans(
                     fontSize: 14,
                     color: colors.text.withAlpha((0.6 * 255).round()),
@@ -292,13 +304,13 @@ class ProfileScreen extends StatelessWidget {
                 colors,
                 Icons.phone,
                 'Llámanos',
-                '+52 55 1234 5678',
+                '+52 773 154 0336',
               ),
               _buildHelpItem(
                 colors,
                 Icons.email,
                 'Correo electrónico',
-                'soporte@forracontrol.com',
+                'johannjimenezperez@gmail.com',
               ),
               _buildHelpItem(
                 colors,
