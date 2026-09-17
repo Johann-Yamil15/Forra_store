@@ -4,6 +4,7 @@ import 'package:forra_store/core/theme/neumorphic_colors.dart';
 import 'package:forra_store/core/utils/neumorphic_style.dart';
 import 'package:forra_store/data/models/venta_ticket.dart';
 import 'package:forra_store/data/services/printer_service.dart';
+import 'package:forra_store/data/services/ticket_formatter.dart';
 import 'package:forra_store/presentation/providers/printer_provider.dart';
 
 class PrinterSettingsScreen extends StatefulWidget {
@@ -42,6 +43,20 @@ class _PrinterSettingsScreenState extends State<PrinterSettingsScreen> {
           padding: const EdgeInsets.all(20),
           children: [
             _buildEstado(colors, printer),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => _mostrarVistaPrevia(context),
+                icon: Icon(Icons.visibility_outlined, color: colors.primary),
+                label: Text('Vista previa del ticket', style: TextStyle(color: colors.primary, fontWeight: FontWeight.w600)),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: colors.primary.withValues(alpha: 0.4)),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+              ),
+            ),
             const SizedBox(height: 20),
             Row(
               children: [
@@ -166,29 +181,106 @@ class _PrinterSettingsScreenState extends State<PrinterSettingsScreen> {
     }
   }
 
+  /// Venta ficticia con varios artículos (uno con precio especial) para que
+  /// tanto la vista previa como el ticket de prueba muestren un caso real,
+  /// no un ticket vacío de un solo producto.
+  VentaTicket _ticketDeEjemplo() {
+    final items = [
+      VentaTicketItem(
+        nombreProducto: 'Alimento Purina Ganado',
+        unidad: 'Bulto',
+        tamano: '40 kg',
+        cantidad: 2,
+        precioUnitario: 350.0,
+        precioEfectivo: 320.0,
+      ),
+      VentaTicketItem(
+        nombreProducto: 'Alambre de Puas',
+        unidad: 'Rollo',
+        tamano: '',
+        cantidad: 1,
+        precioUnitario: 890.0,
+        precioEfectivo: 890.0,
+      ),
+      VentaTicketItem(
+        nombreProducto: 'Vitaminas Vigor',
+        unidad: 'Frasco',
+        tamano: '500 ml',
+        cantidad: 3,
+        precioUnitario: 145.5,
+        precioEfectivo: 145.5,
+      ),
+    ];
+    final totalOriginal = items.fold(0.0, (s, i) => s + i.precioUnitario * i.cantidad);
+    final totalFinal = items.fold(0.0, (s, i) => s + i.subtotal);
+    return VentaTicket(
+      idVenta: 123,
+      fecha: DateTime.now(),
+      vendedor: 'Trabajador Demo',
+      cliente: 'Juan Perez',
+      items: items,
+      totalOriginal: totalOriginal,
+      descuento: totalOriginal - totalFinal,
+      totalFinal: totalFinal,
+    );
+  }
+
+  void _mostrarVistaPrevia(BuildContext context) {
+    final lineas = TicketFormatter.previewLines(_ticketDeEjemplo());
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(
+              child: Container(
+                width: 300,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(4),
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.35), blurRadius: 24, offset: const Offset(0, 10))],
+                ),
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: lineas
+                        .map((l) => Text(
+                              l.texto.isEmpty ? ' ' : l.texto,
+                              textAlign: l.align == TicketAlign.center ? TextAlign.center : TextAlign.left,
+                              softWrap: false,
+                              overflow: TextOverflow.visible,
+                              style: TextStyle(
+                                fontFamily: 'monospace',
+                                fontSize: 11.5,
+                                height: 1.35,
+                                fontWeight: l.bold ? FontWeight.bold : FontWeight.normal,
+                                color: Colors.black,
+                              ),
+                            ))
+                        .toList(),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cerrar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _imprimirPrueba(BuildContext context) async {
     final messenger = ScaffoldMessenger.of(context);
-    final ticket = VentaTicket(
-      idVenta: 0,
-      fecha: DateTime.now(),
-      vendedor: 'Prueba',
-      cliente: null,
-      items: [
-        VentaTicketItem(
-          nombreProducto: 'Producto de prueba',
-          unidad: 'Pieza',
-          tamano: '',
-          cantidad: 1,
-          precioUnitario: 10.0,
-          precioEfectivo: 10.0,
-        ),
-      ],
-      totalOriginal: 10.0,
-      descuento: 0,
-      totalFinal: 10.0,
-    );
     try {
-      await context.read<PrinterProvider>().printVenta(ticket);
+      await context.read<PrinterProvider>().printVenta(_ticketDeEjemplo());
     } catch (e) {
       if (context.mounted) messenger.showSnackBar(SnackBar(content: Text('No se pudo imprimir: $e')));
     }
