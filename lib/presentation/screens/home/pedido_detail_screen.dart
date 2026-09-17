@@ -1,13 +1,55 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:forra_store/core/theme/neumorphic_colors.dart';
 import 'package:forra_store/core/utils/neumorphic_style.dart';
 import 'package:forra_store/data/models/pedido.dart';
+import 'package:forra_store/data/models/venta_ticket.dart';
+import 'package:forra_store/presentation/providers/printer_provider.dart';
 import 'package:intl/intl.dart';
 
-class PedidoDetailScreen extends StatelessWidget {
+class PedidoDetailScreen extends StatefulWidget {
   final Pedido pedido;
 
   const PedidoDetailScreen({super.key, required this.pedido});
+
+  @override
+  State<PedidoDetailScreen> createState() => _PedidoDetailScreenState();
+}
+
+class _PedidoDetailScreenState extends State<PedidoDetailScreen> {
+  bool _imprimiendo = false;
+
+  Pedido get pedido => widget.pedido;
+
+  Future<void> _reimprimir() async {
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _imprimiendo = true);
+    try {
+      final ticket = VentaTicket(
+        idVenta: int.tryParse(pedido.id) ?? 0,
+        fecha: pedido.fecha,
+        cliente: pedido.nombreCliente,
+        items: pedido.items
+            .map((item) => VentaTicketItem(
+                  nombreProducto: item.nombreProducto,
+                  unidad: item.unidad,
+                  tamano: item.tamano,
+                  cantidad: item.cantidad,
+                  precioUnitario: item.precioUnitario,
+                  precioEfectivo: item.precioEfectivo ?? item.precioUnitario,
+                ))
+            .toList(),
+        totalOriginal: pedido.totalOriginal,
+        descuento: pedido.descuento,
+        totalFinal: pedido.totalFinal,
+      );
+      await context.read<PrinterProvider>().printVenta(ticket);
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text('No se pudo imprimir: $e')));
+    } finally {
+      if (mounted) setState(() => _imprimiendo = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,6 +64,15 @@ class PedidoDetailScreen extends StatelessWidget {
         backgroundColor: colors.background,
         elevation: 0,
         iconTheme: IconThemeData(color: colors.text),
+        actions: [
+          IconButton(
+            tooltip: 'Reimprimir ticket',
+            icon: _imprimiendo
+                ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: colors.primary))
+                : Icon(Icons.print_outlined, color: colors.primary),
+            onPressed: _imprimiendo ? null : _reimprimir,
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),

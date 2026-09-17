@@ -24,7 +24,10 @@ class VentaTicketItem {
 class VentaTicket {
   final int idVenta;
   final DateTime fecha;
-  final String vendedor;
+  // Null cuando se reimprime desde el historial: varios trabajadores
+  // comparten un solo punto de venta, así que no hay un vendedor específico
+  // que registrar ahí (sí se conoce en el momento del checkout).
+  final String? vendedor;
   final String? cliente;
   final List<VentaTicketItem> items;
   final double totalOriginal;
@@ -34,7 +37,7 @@ class VentaTicket {
   VentaTicket({
     required this.idVenta,
     required this.fecha,
-    required this.vendedor,
+    this.vendedor,
     this.cliente,
     required this.items,
     required this.totalOriginal,

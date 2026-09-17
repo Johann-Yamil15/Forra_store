@@ -24,7 +24,9 @@ class TicketFormatter {
 
     bytes += generator.text(_clean('Folio: ${venta.idVenta.toString().padLeft(6, '0')}'));
     bytes += generator.text(_clean('Fecha: ${_fmtFecha(venta.fecha)}  ${_fmtHora(venta.fecha)}'));
-    bytes += generator.text(_clean('Atendio: ${venta.vendedor}'));
+    if (venta.vendedor != null) {
+      bytes += generator.text(_clean('Atendio: ${venta.vendedor}'));
+    }
     bytes += generator.text(_clean('Cliente: ${venta.cliente ?? 'Publico en general'}'));
     bytes += generator.hr();
 
