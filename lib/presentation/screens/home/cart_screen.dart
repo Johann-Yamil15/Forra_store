@@ -214,123 +214,147 @@ class CartScreen extends StatelessWidget {
                           );
 
                           if (!context.mounted) return;
-                          final printerProvider = context.read<PrinterProvider>();
+                          final impresoraConectada = context.read<PrinterProvider>().isConnected;
+                          // Estado local del diálogo: se decide en el momento
+                          // si se imprime o no, en vez de imprimir solo.
+                          var imprimir = impresoraConectada;
+                          var imprimiendo = false;
                           String? printError;
-                          if (printerProvider.isConnected) {
-                            try {
-                              await printerProvider.printVenta(ticketConFolio);
-                            } catch (e) {
-                              printError = '$e';
-                            }
-                          } else {
-                            printError = 'Sin impresora conectada — conéctala desde Perfil > Impresora térmica.';
-                          }
 
-                          if (!context.mounted) return;
                           showDialog(
                             context: context,
                             builder:
-                                (ctx) => AlertDialog(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(24),
-                                  ),
-                                  backgroundColor: colors.background,
-                                  title: Center(
-                                    child: Container(
-                                      padding: const EdgeInsets.all(16),
-                                      decoration: BoxDecoration(
-                                        color: colors.primary.withValues(
-                                          alpha: 0.1,
+                                (ctx) => StatefulBuilder(
+                                  builder: (ctx, setDialogState) => AlertDialog(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(24),
+                                    ),
+                                    backgroundColor: colors.background,
+                                    title: Center(
+                                      child: Container(
+                                        padding: const EdgeInsets.all(16),
+                                        decoration: BoxDecoration(
+                                          color: colors.primary.withValues(
+                                            alpha: 0.1,
+                                          ),
+                                          shape: BoxShape.circle,
                                         ),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: Icon(
-                                        Icons.check_circle_outline,
-                                        color: colors.primary,
-                                        size: 50,
+                                        child: Icon(
+                                          Icons.check_circle_outline,
+                                          color: colors.primary,
+                                          size: 50,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  content: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        '¡Venta Exitosa!',
-                                        style: TextStyle(
-                                          fontSize: 22,
-                                          fontWeight: FontWeight.bold,
-                                          color: colors.text,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 12),
-                                      Text(
-                                        'Pedido #$idVenta registrado correctamente.',
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          color: colors.text.withValues(
-                                            alpha: 0.6,
+                                    content: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          '¡Venta Exitosa!',
+                                          style: TextStyle(
+                                            fontSize: 22,
+                                            fontWeight: FontWeight.bold,
+                                            color: colors.text,
                                           ),
                                         ),
-                                      ),
-                                      if (printError != null) ...[
                                         const SizedBox(height: 12),
                                         Text(
-                                          printError,
+                                          'Pedido #$idVenta registrado correctamente.',
                                           textAlign: TextAlign.center,
-                                          style: TextStyle(color: colors.secondary, fontSize: 12),
-                                        ),
-                                      ],
-                                    ],
-                                  ),
-                                  actions: [
-                                    if (printError != null)
-                                      Container(
-                                        width: double.infinity,
-                                        margin: const EdgeInsets.symmetric(horizontal: 10),
-                                        child: OutlinedButton.icon(
-                                          onPressed: () async {
-                                            final messenger = ScaffoldMessenger.of(ctx);
-                                            try {
-                                              await context.read<PrinterProvider>().printVenta(ticketConFolio);
-                                              if (ctx.mounted) Navigator.pop(ctx);
-                                            } catch (e) {
-                                              messenger.showSnackBar(SnackBar(content: Text('No se pudo imprimir: $e')));
-                                            }
-                                          },
-                                          icon: Icon(Icons.print_outlined, color: colors.primary),
-                                          label: Text('Reintentar impresión', style: TextStyle(color: colors.primary)),
-                                        ),
-                                      ),
-                                    const SizedBox(height: 8),
-                                    Container(
-                                      width: double.infinity,
-                                      margin: const EdgeInsets.symmetric(
-                                        horizontal: 10,
-                                      ),
-                                      child: ElevatedButton(
-                                        onPressed: () => Navigator.pop(ctx),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: colors.primary,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              12,
+                                          style: TextStyle(
+                                            color: colors.text.withValues(
+                                              alpha: 0.6,
                                             ),
                                           ),
-                                          padding: const EdgeInsets.symmetric(
-                                            vertical: 14,
-                                          ),
                                         ),
-                                        child: const Text(
-                                          'Entendido',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold,
+                                        const SizedBox(height: 16),
+                                        if (impresoraConectada)
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              Checkbox(
+                                                value: imprimir,
+                                                activeColor: colors.primary,
+                                                onChanged: imprimiendo
+                                                    ? null
+                                                    : (v) => setDialogState(() => imprimir = v ?? false),
+                                              ),
+                                              Text('Imprimir ticket', style: TextStyle(color: colors.text)),
+                                            ],
+                                          )
+                                        else
+                                          Text(
+                                            'Sin impresora conectada — conéctala desde Perfil > Impresora térmica.',
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(color: colors.textSecondary, fontSize: 11),
                                           ),
+                                        if (printError != null) ...[
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            printError!,
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(color: colors.secondary, fontSize: 12),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                    actions: [
+                                      Container(
+                                        width: double.infinity,
+                                        margin: const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                        ),
+                                        child: ElevatedButton(
+                                          onPressed: imprimiendo
+                                              ? null
+                                              : () async {
+                                                  if (!imprimir) {
+                                                    Navigator.pop(ctx);
+                                                    return;
+                                                  }
+                                                  setDialogState(() {
+                                                    imprimiendo = true;
+                                                    printError = null;
+                                                  });
+                                                  try {
+                                                    await context.read<PrinterProvider>().printVenta(ticketConFolio);
+                                                    if (ctx.mounted) Navigator.pop(ctx);
+                                                  } catch (e) {
+                                                    setDialogState(() {
+                                                      imprimiendo = false;
+                                                      printError = 'No se pudo imprimir: $e';
+                                                    });
+                                                  }
+                                                },
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: colors.primary,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(
+                                                12,
+                                              ),
+                                            ),
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 14,
+                                            ),
+                                          ),
+                                          child: imprimiendo
+                                              ? const SizedBox(
+                                                  width: 20,
+                                                  height: 20,
+                                                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                                                )
+                                              : Text(
+                                                  imprimir ? 'Imprimir y cerrar' : 'Entendido',
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
                                         ),
                                       ),
-                                    ),
-                                    const SizedBox(height: 10),
-                                  ],
+                                      const SizedBox(height: 10),
+                                    ],
+                                  ),
                                 ),
                           );
                         } catch (e) {
