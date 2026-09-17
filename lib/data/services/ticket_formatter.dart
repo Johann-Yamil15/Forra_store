@@ -56,15 +56,18 @@ class TicketFormatter {
     add(StoreInfo.telefono, align: TicketAlign.center);
     hr();
 
-    add('Folio: ${venta.idVenta.toString().padLeft(6, '0')}');
-    add('Fecha: ${_fmtFecha(venta.fecha)}  ${_fmtHora(venta.fecha)}');
+    add('Folio: ${venta.idVenta.toString().padLeft(6, '0')}', align: TicketAlign.center);
+    add('Fecha: ${_fmtFecha(venta.fecha)}  ${_fmtHora(venta.fecha)}', align: TicketAlign.center);
     if (venta.vendedor != null) {
-      add('Atendio: ${venta.vendedor}');
+      add('Atendio: ${venta.vendedor}', align: TicketAlign.center);
     }
-    add('Cliente: ${venta.cliente ?? 'Publico en general'}');
+    add('Cliente: ${venta.cliente ?? 'Publico en general'}', align: TicketAlign.center);
     hr();
 
     // ── Detalle de venta ────────────────────────────────────────────────
+    // Una línea en blanco entre artículos: sin ella, cuando un nombre se
+    // parte en dos renglones (32 caracteres es poco) el corte se confunde
+    // con el siguiente producto y se pierde de vista dónde empieza cada uno.
     for (final item in venta.items) {
       final presentacion = item.tamano.trim().isEmpty ? item.unidad : '${item.unidad} ${item.tamano}';
       final descripcion = '${item.nombreProducto} ($presentacion)';
@@ -76,6 +79,7 @@ class TicketFormatter {
       if (tieneDescuento) {
         add(_twoCols('  Precio lista:', _money(item.precioUnitario)));
       }
+      add('');
     }
     hr();
 
