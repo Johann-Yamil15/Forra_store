@@ -6,6 +6,7 @@ import 'package:forra_store/core/utils/neumorphic_style.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
+import 'package:forra_store/presentation/screens/printer/printer_settings_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -115,6 +116,11 @@ class ProfileScreen extends StatelessWidget {
         "icon": Icons.settings,
         "title": "Configuración",
         "action": () => _showSettingsModal(context, colors),
+      },
+      {
+        "icon": Icons.print_outlined,
+        "title": "Impresora térmica",
+        "action": () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrinterSettingsScreen())),
       },
       {
         "icon": Icons.help_outline,

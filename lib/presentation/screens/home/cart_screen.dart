@@ -4,9 +4,11 @@ import 'package:provider/provider.dart';
 import 'package:forra_store/core/constants/api_constants.dart';
 import 'package:forra_store/core/utils/auth_provider.dart';
 import 'package:forra_store/presentation/providers/cart_provider.dart';
+import 'package:forra_store/presentation/providers/printer_provider.dart';
 import 'package:forra_store/core/theme/neumorphic_colors.dart';
 import 'package:forra_store/core/utils/neumorphic_style.dart';
 import 'package:forra_store/data/models/cart_item.dart';
+import 'package:forra_store/data/models/venta_ticket.dart';
 
 class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
@@ -176,10 +178,53 @@ class CartScreen extends StatelessWidget {
                         final auth = context.read<AuthProvider>();
 
                         try {
+                          // Se captura ANTES de limpiar el carrito: checkout()
+                          // solo devuelve el idVenta, no el detalle, y clear()
+                          // borra items/cliente que el ticket necesita.
+                          final fecha = DateTime.now();
+                          final vendedor = auth.username ?? 'N/A';
+                          final cliente = cartProvider.selectedCliente?.nombre;
+                          final itemsTicket = cartProvider.items
+                              .map((item) => VentaTicketItem(
+                                    nombreProducto: item.nombreProducto,
+                                    unidad: item.unidad,
+                                    tamano: item.tamano,
+                                    cantidad: item.cantidad,
+                                    precioUnitario: item.precioUnitario,
+                                    precioEfectivo: cartProvider.getItemPrice(item),
+                                  ))
+                              .toList();
+                          final totalOriginal = cartProvider.totalOriginal;
+                          final descuento = cartProvider.totalDescuento;
+                          final totalFinal = cartProvider.totalFinal;
+
                           final idVenta = await cartProvider.checkout(
                             idUsuario: auth.idUsuario ?? 0,
                           );
                           cartProvider.clear();
+                          final ticketConFolio = VentaTicket(
+                            idVenta: idVenta,
+                            fecha: fecha,
+                            vendedor: vendedor,
+                            cliente: cliente,
+                            items: itemsTicket,
+                            totalOriginal: totalOriginal,
+                            descuento: descuento,
+                            totalFinal: totalFinal,
+                          );
+
+                          if (!context.mounted) return;
+                          final printerProvider = context.read<PrinterProvider>();
+                          String? printError;
+                          if (printerProvider.isConnected) {
+                            try {
+                              await printerProvider.printVenta(ticketConFolio);
+                            } catch (e) {
+                              printError = '$e';
+                            }
+                          } else {
+                            printError = 'Sin impresora conectada — conéctala desde Perfil > Impresora térmica.';
+                          }
 
                           if (!context.mounted) return;
                           showDialog(
@@ -227,9 +272,36 @@ class CartScreen extends StatelessWidget {
                                           ),
                                         ),
                                       ),
+                                      if (printError != null) ...[
+                                        const SizedBox(height: 12),
+                                        Text(
+                                          printError,
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(color: colors.secondary, fontSize: 12),
+                                        ),
+                                      ],
                                     ],
                                   ),
                                   actions: [
+                                    if (printError != null)
+                                      Container(
+                                        width: double.infinity,
+                                        margin: const EdgeInsets.symmetric(horizontal: 10),
+                                        child: OutlinedButton.icon(
+                                          onPressed: () async {
+                                            final messenger = ScaffoldMessenger.of(ctx);
+                                            try {
+                                              await context.read<PrinterProvider>().printVenta(ticketConFolio);
+                                              if (ctx.mounted) Navigator.pop(ctx);
+                                            } catch (e) {
+                                              messenger.showSnackBar(SnackBar(content: Text('No se pudo imprimir: $e')));
+                                            }
+                                          },
+                                          icon: Icon(Icons.print_outlined, color: colors.primary),
+                                          label: Text('Reintentar impresión', style: TextStyle(color: colors.primary)),
+                                        ),
+                                      ),
+                                    const SizedBox(height: 8),
                                     Container(
                                       width: double.infinity,
                                       margin: const EdgeInsets.symmetric(

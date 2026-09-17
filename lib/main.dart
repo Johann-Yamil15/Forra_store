@@ -13,6 +13,7 @@ import 'presentation/screens/splash_screen.dart';
 import 'presentation/screens/login_screen.dart';
 import 'presentation/providers/cart_provider.dart';
 import 'presentation/providers/admin_provider.dart';
+import 'presentation/providers/printer_provider.dart';
 
 // Permite conexión a IIS Express con certificado auto-firmado en debug
 class _DevHttpOverrides extends HttpOverrides {
@@ -34,6 +35,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => CartProvider()),
         ChangeNotifierProvider(create: (_) => AdminProvider()),
+        ChangeNotifierProvider(create: (_) => PrinterProvider()),
       ],
       child: const ForraStoreApp(),
     ),

@@ -1,4 +1,5 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <!-- Sin esto, el APK de release no tiene acceso a red: funciona en
          `flutter run` porque el manifest de debug ya lo agrega para hot
          reload, pero un build de distribución quedaría sin poder llamar
@@ -6,6 +7,13 @@
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-feature android:name="android.hardware.camera" android:required="false"/>
+    <!-- Impresora térmica por Bluetooth clásico (MP210). Android 11 y menor
+         usa BLUETOOTH/BLUETOOTH_ADMIN; Android 12+ los reemplaza por los
+         permisos granulares de abajo, que se piden en tiempo de ejecución. -->
+    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" tools:targetApi="s" android:usesPermissionFlags="neverForLocation"/>
     <application
         android:label="Forra Store"
         android:name="${applicationName}"
