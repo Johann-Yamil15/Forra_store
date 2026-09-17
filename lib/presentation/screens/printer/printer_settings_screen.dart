@@ -247,7 +247,12 @@ class _PrinterSettingsScreenState extends State<PrinterSettingsScreen> {
                 child: SingleChildScrollView(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: lineas
+                    children: [
+                      Center(
+                        child: Image.asset('assets/images/logo_pure_bw.png', width: 90),
+                      ),
+                      const SizedBox(height: 6),
+                      ...lineas
                         .map((l) => Text(
                               l.texto.isEmpty ? ' ' : l.texto,
                               textAlign: l.align == TicketAlign.center ? TextAlign.center : TextAlign.left,
@@ -260,8 +265,8 @@ class _PrinterSettingsScreenState extends State<PrinterSettingsScreen> {
                                 fontWeight: l.bold ? FontWeight.bold : FontWeight.normal,
                                 color: Colors.black,
                               ),
-                            ))
-                        .toList(),
+                            )),
+                    ],
                   ),
                 ),
               ),

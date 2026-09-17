@@ -1,4 +1,6 @@
 import 'package:esc_pos_utils_plus/esc_pos_utils_plus.dart';
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:image/image.dart' as img;
 import 'package:forra_store/core/constants/store_info.dart';
 import 'package:forra_store/data/models/venta_ticket.dart';
 
@@ -19,11 +21,37 @@ class TicketLinea {
 /// en esc_pos_utils_plus).
 class TicketFormatter {
   static const width = 32;
+  static const _logoAsset = 'assets/images/logo_pure_bw.png';
+
+  static img.Image? _logoCache;
+
+  /// Carga y redimensiona el logo una sola vez (se reusa en cada ticket).
+  /// El ancho se limita a 140px para que no domine el papel de 58 mm ni
+  /// alargue mucho el tiempo de impresión — es un emblema en el encabezado,
+  /// no la imagen principal del ticket.
+  static Future<img.Image?> _loadLogo() async {
+    if (_logoCache != null) return _logoCache;
+    try {
+      final data = await rootBundle.load(_logoAsset);
+      final decoded = img.decodePng(data.buffer.asUint8List());
+      if (decoded == null) return null;
+      _logoCache = img.copyResize(decoded, width: 140);
+      return _logoCache;
+    } catch (_) {
+      return null;
+    }
+  }
 
   static Future<List<int>> build(VentaTicket venta) async {
     final profile = await CapabilityProfile.load();
     final generator = Generator(PaperSize.mm58, profile);
     var bytes = <int>[];
+
+    final logo = await _loadLogo();
+    if (logo != null) {
+      bytes += generator.image(logo);
+      bytes += generator.feed(1);
+    }
 
     for (final l in _lineas(venta)) {
       bytes += generator.text(
