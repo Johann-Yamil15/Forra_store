@@ -47,6 +47,11 @@ class TicketFormatter {
     final generator = Generator(PaperSize.mm58, profile);
     var bytes = <int>[];
 
+    // ESC 3 26: interlineado de 26 puntos — el de fábrica (~30-32) deja el
+    // ticket con huecos entre renglones; a 26 queda compacto sin que las
+    // letras se encimen.
+    bytes += generator.rawBytes([0x1b, 0x33, 26]);
+
     final logo = await _loadLogo();
     if (logo != null) {
       bytes += generator.image(logo);
@@ -93,23 +98,31 @@ class TicketFormatter {
     hr();
 
     // ── Detalle de venta ────────────────────────────────────────────────
-    // Una línea en blanco entre artículos: sin ella, cuando un nombre se
-    // parte en dos renglones (32 caracteres es poco) el corte se confunde
-    // con el siguiente producto y se pierde de vista dónde empieza cada uno.
+    // 1 pieza: nombre y precio en el mismo renglón (o el precio al final
+    // del último renglón partido, si cabe). 2 o más: el nombre y luego el
+    // precio unitario aparte — así se distingue sin necesitar una línea en
+    // blanco entre productos, que solo alargaba el ticket sin ayudar.
     for (final item in venta.items) {
       final presentacion = item.tamano.trim().isEmpty ? item.unidad : '${item.unidad} ${item.tamano}';
-      final descripcion = '${item.nombreProducto} ($presentacion)';
-      for (final linea in _wrap('${item.cantidad}x $descripcion', width)) {
-        add(linea);
+      final nombre = '${item.cantidad}x ${item.nombreProducto} ($presentacion)';
+      final importe = _money(item.subtotal);
+      if (item.cantidad == 1) {
+        for (final linea in _columnas(nombre, importe)) {
+          add(linea);
+        }
+      } else {
+        for (final linea in _wrap(nombre, width)) {
+          add(linea);
+        }
+        add(_twoCols('  ${_money(item.precioEfectivo)} c/u', importe));
       }
-      final tieneDescuento = item.precioEfectivo < item.precioUnitario;
-      add(_twoCols('  ${_money(item.precioEfectivo)} c/u', _money(item.subtotal)));
-      if (tieneDescuento) {
+      if (item.precioEfectivo < item.precioUnitario) {
         add(_twoCols('  Precio lista:', _money(item.precioUnitario)));
       }
-      add('');
     }
     hr();
+    final totalArticulos = venta.items.fold(0, (s, i) => s + i.cantidad);
+    add('Articulos: $totalArticulos');
 
     // ── Totales ─────────────────────────────────────────────────────────
     add(_twoCols('Subtotal:', _money(venta.totalOriginal)));
@@ -118,6 +131,9 @@ class TicketFormatter {
     }
     hr();
     add(_twoCols('TOTAL:', _money(venta.totalFinal)), bold: true);
+    if (venta.descuento > 0) {
+      add('Ahorraste ${_money(venta.descuento)}!', align: TicketAlign.center, bold: true);
+    }
 
     // ── Pie de página ───────────────────────────────────────────────────
     add('');
@@ -156,6 +172,26 @@ class TicketFormatter {
       return '${left.substring(0, maxLeft)} $right';
     }
     return left + ' ' * espacio + right;
+  }
+
+  /// Como [_twoCols], pero para líneas de nombre de producto que pueden no
+  /// caber: si no entran en un renglón, parte [izq] en varias líneas y pega
+  /// [der] al final de la última si cabe ahí (se ahorra un renglón); si
+  /// tampoco cabe, [der] va en su propia línea, pegado a la derecha.
+  static List<String> _columnas(String izq, String der) {
+    final espacio = width - izq.length - der.length;
+    if (espacio >= 1) return [izq + ' ' * espacio + der];
+
+    final lineas = _wrap(izq, width);
+    final ultima = lineas.isNotEmpty ? lineas.last : '';
+    final espacioUltima = width - ultima.length - der.length;
+    if (espacioUltima >= 1) {
+      lineas[lineas.length - 1] = ultima + ' ' * espacioUltima + der;
+    } else {
+      final relleno = (width - der.length).clamp(0, width);
+      lineas.add(' ' * relleno + der);
+    }
+    return lineas;
   }
 
   /// Corta [text] en líneas de máximo [ancho] caracteres, respetando
