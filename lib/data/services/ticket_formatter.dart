@@ -124,8 +124,26 @@ class TicketFormatter {
     add('Gracias por su compra!', align: TicketAlign.center, bold: true);
     add('Vuelva pronto', align: TicketAlign.center);
 
+    // ── Avisos legales ──────────────────────────────────────────────────
+    add('');
+    hr();
+    for (final aviso in _avisos) {
+      for (final linea in _wrap(aviso, width)) {
+        add(linea, align: TicketAlign.center);
+      }
+      add('');
+    }
+
     return lineas;
   }
+
+  static const _avisos = [
+    'Cualquier duda o aclaracion, presente su ticket.',
+    'No se aceptan devoluciones de productos abiertos.',
+    'Consulte terminos y condiciones.',
+    'Consulte promociones en tienda.',
+    'Este ticket no es un comprobante fiscal.',
+  ];
 
   static String _money(double v) => '\$${v.toStringAsFixed(2)}';
 
