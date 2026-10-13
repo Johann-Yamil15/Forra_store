@@ -67,7 +67,7 @@ class TicketFormatter {
         ),
       );
     }
-    bytes += generator.feed(3);
+    bytes += generator.feed(2);
     bytes += generator.cut();
 
     return bytes;
@@ -141,13 +141,14 @@ class TicketFormatter {
     add('Vuelva pronto', align: TicketAlign.center);
 
     // ── Avisos legales ──────────────────────────────────────────────────
-    add('');
+    // Sin línea en blanco entre avisos — pegados, como "Gracias por su
+    // compra! / Vuelva pronto" de arriba. Cada uno en blanco costaba un
+    // renglón entero de papel desperdiciado por nada.
     hr();
     for (final aviso in _avisos) {
       for (final linea in _wrap(aviso, width)) {
         add(linea, align: TicketAlign.center);
       }
-      add('');
     }
 
     return lineas;
